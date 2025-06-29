@@ -12,11 +12,16 @@ import { Badge } from '../components/ui/badge';
 interface ProjectIdea {
   title: string;
   description: string;
+  detailedDescription: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   estimated_time: string;
   innovation_score: number;
   features: string[];
   suggested_stack: string[];
+  targetAudience: string;
+  marketPotential: string;
+  keyBenefits: string[];
+  implementationSteps: string[];
 }
 
 interface ForgeInputs {
@@ -59,6 +64,12 @@ const IdeaForgeAI: React.FC = () => {
   const [history, setHistory] = useState<ProjectIdea[]>([]);
   const [showProjectSteps, setShowProjectSteps] = useState(false);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState<{
+    isRateLimited: boolean;
+    retryAfter: number;
+    countdown: number;
+  } | null>(null);
 
   const themes = [
     'AI & Machine Learning', 'EdTech', 'Gaming', 'Environment & Sustainability', 
@@ -498,28 +509,110 @@ const IdeaForgeAI: React.FC = () => {
   };
 
   const buildPrompt = (): string => {
-    return `Generate a unique, innovative project idea based on these specifications:
+    return `You are an expert project idea generator for young innovators and developers. Generate a comprehensive, innovative project idea based on these specifications:
 
 Theme: ${inputs.theme}
 Design Style: ${inputs.designStyle}
-Tech Stack: ${inputs.techStack.join(', ')}
+Tech Stack: ${inputs.techStack.join(', ') || 'Any suitable technologies'}
 Team Size: ${inputs.teamSize}
 Build Time: ${inputs.buildTime}
-Intent/Mood: ${inputs.intent}
-Special Requirements: ${inputs.specialRequests}
+Intent/Mood: ${inputs.intent || 'Professional and impactful'}
+Special Requirements: ${inputs.specialRequests || 'None specified'}
+
+Create a detailed project idea that is:
+1. Innovative and unique
+2. Feasible within the given timeframe
+3. Aligned with the specified theme and requirements
+4. Suitable for the team size
+5. Commercially viable or socially impactful
 
 Return ONLY a valid JSON response in this exact format:
 {
-  "title": "Creative project name",
-  "description": "Detailed 2-3 sentence description of the project",
+  "title": "Creative and catchy project name",
+  "description": "Brief 1-2 sentence overview of the project",
+  "detailedDescription": "Comprehensive 4-5 sentence description explaining the project's purpose, functionality, target users, unique features, and potential impact",
   "difficulty": "Easy|Medium|Hard",
-  "estimated_time": "Realistic time estimate",
+  "estimated_time": "${inputs.buildTime}",
   "innovation_score": 85,
-  "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4"],
-  "suggested_stack": ["Tech1", "Tech2", "Tech3"]
+  "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5"],
+  "suggested_stack": ["Tech1", "Tech2", "Tech3", "Tech4"],
+  "targetAudience": "Specific description of who would use this project",
+  "marketPotential": "Brief analysis of market opportunity and potential impact",
+  "keyBenefits": ["Benefit 1", "Benefit 2", "Benefit 3"],
+  "implementationSteps": ["Step 1", "Step 2", "Step 3", "Step 4", "Step 5"]
 }
 
-Make it creative, feasible, and aligned with the specified constraints.`;
+Make it creative, practical, and aligned with current technology trends. Ensure the innovation score reflects genuine uniqueness and market potential.`;
+  };
+
+  // Check if OpenAI API key is configured
+  const getOpenAIKey = () => {
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    console.log('Checking OpenAI API Key:', apiKey ? 'Present' : 'Missing');
+    return apiKey && apiKey.trim() !== '' && !apiKey.includes('your_openai_api_key_here') ? apiKey : null;
+  };
+
+  // Rate limit countdown effect
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0) {
+      interval = setInterval(() => {
+        setRateLimitInfo(prev => {
+          if (!prev || prev.countdown <= 1) {
+            return null; // Clear rate limit info when countdown reaches 0
+          }
+          return {
+            ...prev,
+            countdown: prev.countdown - 1
+          };
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [rateLimitInfo]);
+
+  const parseRetryAfter = (errorMessage: string): number => {
+    // Try multiple patterns to extract retry time
+    const patterns = [
+      /try again in (\d+)s/i,
+      /please try again in (\d+) seconds/i,
+      /retry after (\d+) seconds/i,
+      /wait (\d+) seconds/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = errorMessage.match(pattern);
+      if (match) {
+        return parseInt(match[1]);
+      }
+    }
+    
+    // Default to 30 seconds if no specific time found
+    return 30;
+  };
+
+  const isRateLimitError = (error: any): boolean => {
+    // Check various indicators of rate limiting
+    if (error?.error?.type === 'requests' || error?.error?.code === 'rate_limit_exceeded') {
+      return true;
+    }
+    
+    const errorMessage = error?.error?.message || error?.message || '';
+    const rateLimitIndicators = [
+      'rate limit',
+      'too many requests',
+      'quota exceeded',
+      'requests per min',
+      'rpm'
+    ];
+    
+    return rateLimitIndicators.some(indicator => 
+      errorMessage.toLowerCase().includes(indicator)
+    );
   };
 
   const forgeIdea = async () => {
@@ -528,14 +621,23 @@ Make it creative, feasible, and aligned with the specified constraints.`;
       return;
     }
 
+    // Check if we're currently rate limited
+    if (rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0) {
+      return; // Don't make request if still rate limited
+    }
+
     setLoading(true);
+    setApiError(null);
+    setRateLimitInfo(null);
     
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      const apiKey = getOpenAIKey();
       
-      if (!apiKey || apiKey === 'your_openai_api_key_here') {
-        throw new Error('OpenAI API key not configured');
+      if (!apiKey) {
+        throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your environment variables.');
       }
+
+      console.log('Making OpenAI API request...');
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -548,59 +650,128 @@ Make it creative, feasible, and aligned with the specified constraints.`;
           messages: [
             {
               role: "system",
-              content: "You are a creative project idea generator. Always respond with valid JSON only, no additional text or formatting."
+              content: "You are a creative project idea generator for young innovators. Always respond with valid JSON only, no additional text or formatting. Generate detailed, innovative, and feasible project ideas."
             },
             {
               role: "user",
               content: buildPrompt()
             }
           ],
-          max_tokens: 800,
+          max_tokens: 1200,
           temperature: 0.8,
         }),
       });
 
+      console.log('OpenAI API Response Status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
-      }
+        const errorData = await response.json().catch(() => ({}));
+        console.error('OpenAI API Error:', errorData);
+        
+        // Check if this is a rate limit error
+        if (response.status === 429 || isRateLimitError(errorData)) {
+          const retryAfter = parseRetryAfter(errorData.error?.message || '');
+          setRateLimitInfo({
+            isRateLimited: true,
+            retryAfter,
+            countdown: retryAfter
+          });
+          
+          // Don't throw error for rate limits, just set the rate limit state
+          // The fallback idea will be shown automatically
+          console.log(`Rate limit detected. Retry after ${retryAfter} seconds.`);
+        } else {
+          // For non-rate-limit errors, throw the error
+          throw new Error(`OpenAI API Error (${response.status}): ${errorData.error?.message || 'Unknown error'}`);
+        }
+      } else {
+        // Successful response
+        const data = await response.json();
+        console.log('OpenAI API Response:', data);
+        
+        const content = data.choices?.[0]?.message?.content;
+        
+        if (!content) {
+          throw new Error('No response content from OpenAI API');
+        }
 
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
-      
-      if (!content) {
-        throw new Error('No response from API');
+        // Clean the content to ensure it's valid JSON
+        const cleanContent = content.trim().replace(/```json\n?|\n?```/g, '');
+        
+        try {
+          const idea: ProjectIdea = JSON.parse(cleanContent);
+          console.log('Generated Idea:', idea);
+          
+          setGeneratedIdea(idea);
+          setHistory(prev => [idea, ...prev.slice(0, 4)]); // Keep last 5 ideas
+          
+          // Clear any previous errors on success
+          setApiError(null);
+          return; // Exit early on success
+          
+        } catch (parseError) {
+          console.error('JSON Parse Error:', parseError);
+          console.error('Content that failed to parse:', cleanContent);
+          throw new Error('Failed to parse AI response. Please try again.');
+        }
       }
-
-      // Parse JSON response
-      const idea: ProjectIdea = JSON.parse(content);
-      setGeneratedIdea(idea);
-      setHistory(prev => [idea, ...prev.slice(0, 4)]); // Keep last 5 ideas
       
     } catch (error: any) {
       console.error('Error generating idea:', error);
       
-      // Fallback idea for demo purposes
+      // Only set API error if it's not a rate limit issue
+      if (!rateLimitInfo?.isRateLimited) {
+        setApiError(error.message);
+      }
+    }
+    
+    // Always show fallback idea if we reach this point (either due to error or rate limit)
+    if (!generatedIdea || rateLimitInfo?.isRateLimited) {
+      console.log('Showing fallback idea due to API issues or rate limiting');
+      
+      // Enhanced fallback idea with all required fields
       const fallbackIdea: ProjectIdea = {
-        title: "EcoTrack - Personal Carbon Footprint Tracker",
+        title: "EcoTrack - Smart Carbon Footprint Tracker",
         description: "A gamified web application that helps users track their daily carbon footprint through interactive challenges and provides personalized recommendations for sustainable living.",
-        difficulty: "Medium",
+        detailedDescription: "EcoTrack is an innovative web application designed to make environmental consciousness engaging and actionable. Users can log their daily activities such as transportation, energy consumption, and food choices, while the app calculates their carbon footprint in real-time. The platform features a gamification system with badges, leaderboards, and challenges to motivate users towards more sustainable behaviors. Advanced AI algorithms provide personalized recommendations based on user patterns, local climate data, and available eco-friendly alternatives. The app also includes a social component where users can share achievements, participate in community challenges, and connect with like-minded individuals committed to reducing their environmental impact.",
+        difficulty: inputs.buildTime === '2 hours' || inputs.buildTime === '4 hours' ? 'Easy' : 
+                   inputs.buildTime === '8 hours' || inputs.buildTime === '12 hours' ? 'Medium' : 'Hard',
         estimated_time: inputs.buildTime,
         innovation_score: 78,
         features: [
-          "Daily activity logging",
-          "Carbon footprint calculator",
-          "Gamification with badges",
-          "Social sharing features",
-          "Sustainability tips"
+          "Daily activity logging with smart categorization",
+          "Real-time carbon footprint calculation",
+          "Gamification with badges and achievements",
+          "AI-powered personalized recommendations",
+          "Social sharing and community challenges",
+          "Local environmental data integration",
+          "Progress tracking and analytics dashboard"
         ],
-        suggested_stack: inputs.techStack.length > 0 ? inputs.techStack.slice(0, 4) : ["React", "Node.js", "MongoDB", "Chart.js"]
+        suggested_stack: inputs.techStack.length > 0 ? inputs.techStack.slice(0, 4) : ["React", "Node.js", "MongoDB", "Chart.js"],
+        targetAudience: "Environmentally conscious individuals aged 18-35 who want to reduce their carbon footprint but need guidance and motivation to maintain sustainable habits",
+        marketPotential: "Growing environmental awareness and corporate sustainability initiatives create a strong market opportunity. Potential for B2B partnerships with companies tracking employee sustainability metrics.",
+        keyBenefits: [
+          "Increased environmental awareness and action",
+          "Gamified approach makes sustainability engaging",
+          "Data-driven insights for better decision making",
+          "Community support and motivation"
+        ],
+        implementationSteps: [
+          "Set up project structure and basic UI components",
+          "Implement user authentication and profile management",
+          "Create activity logging system with carbon calculation",
+          "Build gamification features and achievement system",
+          "Integrate social features and community challenges",
+          "Add AI recommendations and analytics dashboard",
+          "Test, optimize, and deploy the application"
+        ]
       };
       
       setGeneratedIdea(fallbackIdea);
       setHistory(prev => [fallbackIdea, ...prev.slice(0, 4)]);
-    } finally {
-      setLoading(false);
     }
+    
+    setLoading(false);
   };
 
   const handleProceedWithProject = () => {
@@ -624,8 +795,16 @@ Make it creative, feasible, and aligned with the specified constraints.`;
   };
 
   const isApiKeyConfigured = () => {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    return apiKey && apiKey !== 'your_openai_api_key_here';
+    return getOpenAIKey() !== null;
+  };
+
+  const formatTime = (seconds: number): string => {
+    if (seconds < 60) {
+      return `${seconds}s`;
+    }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
   };
 
   return (
@@ -638,21 +817,67 @@ Make it creative, feasible, and aligned with the specified constraints.`;
         <div className="flex items-center justify-center mb-6">
           <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
             <Zap className="text-cyan-400 animate-pulse" size={20} />
-            <span className="text-white/90 text-sm">AI-Powered Project Generator</span>
+            <span className="text-white/90 text-sm">
+              {isApiKeyConfigured() ? 'AI-Powered Project Generator' : 'Demo Mode - Configure OpenAI API Key'}
+            </span>
           </div>
         </div>
       </PageHeader>
 
       <ContentContainer className="max-w-6xl">
-        {/* API Key Status Warning */}
+        {/* API Key Status */}
         {!isApiKeyConfigured() && (
           <div className="mb-8 p-6 bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-500/30 rounded-xl">
             <div className="flex items-start space-x-3">
               <AlertCircle className="text-amber-400 mt-1 flex-shrink-0" size={24} />
               <div>
-                <h3 className="text-amber-300 font-semibold mb-2">Demo Mode Active</h3>
-                <p className="text-amber-100/80">
-                  IdeaForge++ is running in demo mode. For full AI-powered idea generation, configure your OpenAI API key in the environment variables.
+                <h3 className="text-amber-300 font-semibold mb-2">OpenAI API Key Required</h3>
+                <p className="text-amber-100/80 mb-3">
+                  To use the full AI-powered idea generation, please configure your OpenAI API key in the environment variables.
+                </p>
+                <div className="bg-amber-900/30 rounded-lg p-3 border border-amber-500/20">
+                  <p className="text-amber-200 text-sm font-mono">
+                    Add: VITE_OPENAI_API_KEY=your_api_key_here
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rate Limit Warning */}
+        {rateLimitInfo?.isRateLimited && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-orange-900/20 to-red-900/20 border border-orange-500/30 rounded-xl">
+            <div className="flex items-start space-x-3">
+              <Clock className="text-orange-400 mt-1 flex-shrink-0 animate-pulse" size={24} />
+              <div>
+                <h3 className="text-orange-300 font-semibold mb-2">Rate Limit Reached</h3>
+                <p className="text-orange-100/80 mb-3">
+                  You've reached the OpenAI API rate limit. A fallback idea has been generated for you.
+                </p>
+                <div className="bg-orange-900/30 rounded-lg p-3 border border-orange-500/20">
+                  <p className="text-orange-200 text-sm">
+                    ⏱️ Try AI generation again in: <span className="font-mono font-bold">{formatTime(rateLimitInfo.countdown)}</span>
+                  </p>
+                  <p className="text-orange-200/70 text-xs mt-1">
+                    Tip: Upgrade your OpenAI plan at platform.openai.com/account/billing for higher rate limits
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* API Error Display */}
+        {apiError && !rateLimitInfo?.isRateLimited && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-red-900/20 to-red-800/20 border border-red-500/30 rounded-xl">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="text-red-400 mt-1 flex-shrink-0" size={24} />
+              <div>
+                <h3 className="text-red-300 font-semibold mb-2">API Error</h3>
+                <p className="text-red-100/80">{apiError}</p>
+                <p className="text-red-200/60 text-sm mt-2">
+                  Using fallback idea generation. Please check your OpenAI API key and try again.
                 </p>
               </div>
             </div>
@@ -788,13 +1013,18 @@ Make it creative, feasible, and aligned with the specified constraints.`;
               {/* Forge Button */}
               <Button
                 onClick={forgeIdea}
-                disabled={loading || !inputs.theme || !inputs.designStyle || !inputs.teamSize || !inputs.buildTime}
-                className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white py-3 text-lg font-semibold"
+                disabled={loading || !inputs.theme || !inputs.designStyle || !inputs.teamSize || !inputs.buildTime || (rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0)}
+                className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
                     <Loader2 className="animate-spin mr-2" size={20} />
-                    Forging Your Idea...
+                    {isApiKeyConfigured() ? 'Forging Your Idea...' : 'Generating Fallback Idea...'}
+                  </>
+                ) : rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0 ? (
+                  <>
+                    <Clock className="mr-2" size={20} />
+                    Wait {formatTime(rateLimitInfo.countdown)}
                   </>
                 ) : (
                   <>
@@ -821,10 +1051,13 @@ Make it creative, feasible, and aligned with the specified constraints.`;
                     onClick={forgeIdea}
                     variant="outline"
                     size="sm"
-                    className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20"
+                    disabled={rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0}
+                    className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 disabled:opacity-50"
                   >
                     <RotateCcw size={16} className="mr-1" />
-                    Regenerate
+                    {rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0 ? 
+                      `Wait ${formatTime(rateLimitInfo.countdown)}` : 'Regenerate'
+                    }
                   </Button>
                 </div>
 
@@ -838,13 +1071,41 @@ Make it creative, feasible, and aligned with the specified constraints.`;
                     <h3 className="text-2xl font-bold text-white">{generatedIdea.title}</h3>
                   </div>
 
-                  {/* Description */}
+                  {/* Brief Description */}
                   <div className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-xl p-4 border border-blue-500/30">
                     <div className="flex items-center space-x-2 mb-2">
                       <Sparkles className="text-blue-400" size={18} />
-                      <span className="text-blue-300 font-medium">Mission Brief</span>
+                      <span className="text-blue-300 font-medium">Quick Overview</span>
                     </div>
                     <p className="text-gray-200 leading-relaxed">{generatedIdea.description}</p>
+                  </div>
+
+                  {/* Detailed Mission Brief */}
+                  <div className="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-xl p-4 border border-indigo-500/30">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Code className="text-indigo-400" size={18} />
+                      <span className="text-indigo-300 font-medium">Detailed Mission Brief</span>
+                    </div>
+                    <p className="text-gray-200 leading-relaxed">{generatedIdea.detailedDescription}</p>
+                  </div>
+
+                  {/* Target Audience & Market Potential */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-500/30">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Users className="text-green-400" size={18} />
+                        <span className="text-green-300 font-medium">Target Audience</span>
+                      </div>
+                      <p className="text-gray-200 text-sm leading-relaxed">{generatedIdea.targetAudience}</p>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 rounded-xl p-4 border border-yellow-500/30">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Target className="text-yellow-400" size={18} />
+                        <span className="text-yellow-300 font-medium">Market Potential</span>
+                      </div>
+                      <p className="text-gray-200 text-sm leading-relaxed">{generatedIdea.marketPotential}</p>
+                    </div>
                   </div>
 
                   {/* Stats Grid */}
@@ -899,6 +1160,22 @@ Make it creative, feasible, and aligned with the specified constraints.`;
                     </div>
                   </div>
 
+                  {/* Key Benefits */}
+                  <div className="bg-gradient-to-r from-emerald-900/30 to-teal-900/30 rounded-xl p-4 border border-emerald-500/30">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <CheckCircle className="text-emerald-400" size={18} />
+                      <span className="text-emerald-300 font-medium">Key Benefits</span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {generatedIdea.keyBenefits.map((benefit, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                          <span className="text-gray-200">{benefit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Suggested Stack */}
                   <div className="bg-gradient-to-r from-teal-900/30 to-cyan-900/30 rounded-xl p-4 border border-teal-500/30">
                     <div className="flex items-center space-x-2 mb-3">
@@ -910,6 +1187,24 @@ Make it creative, feasible, and aligned with the specified constraints.`;
                         <Badge key={index} className="bg-teal-500/20 text-teal-300 border-teal-500/30">
                           {tech}
                         </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Implementation Steps */}
+                  <div className="bg-gradient-to-r from-violet-900/30 to-purple-900/30 rounded-xl p-4 border border-violet-500/30">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <ArrowRight className="text-violet-400" size={18} />
+                      <span className="text-violet-300 font-medium">Implementation Roadmap</span>
+                    </div>
+                    <div className="space-y-2">
+                      {generatedIdea.implementationSteps.map((step, index) => (
+                        <div key={index} className="flex items-start space-x-3">
+                          <div className="w-6 h-6 bg-violet-500/20 rounded-full flex items-center justify-center text-violet-300 text-sm font-bold mt-0.5">
+                            {index + 1}
+                          </div>
+                          <span className="text-gray-200 text-sm">{step}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -1076,10 +1371,13 @@ Make it creative, feasible, and aligned with the specified constraints.`;
                   </Button>
                   <Button 
                     onClick={forgeIdea}
-                    className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
+                    disabled={rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0}
+                    className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 disabled:opacity-50"
                   >
                     <Zap className="mr-2" size={16} />
-                    Generate New Idea
+                    {rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0 ? 
+                      `Wait ${formatTime(rateLimitInfo.countdown)}` : 'Generate New Idea'
+                    }
                   </Button>
                 </div>
               </div>
