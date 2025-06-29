@@ -45,7 +45,6 @@ interface ProjectStep {
     category: string;
   }>;
   tips: string[];
-  estimatedTime: string;
 }
 
 const IdeaForgeAI: React.FC = () => {
@@ -99,7 +98,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 1,
       title: "🎯 Project Planning & Research",
       description: "Define your project scope, research competitors, and create a detailed plan",
-      estimatedTime: "2-4 hours",
       aiTools: [
         {
           name: "ChatGPT",
@@ -138,7 +136,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 2,
       title: "🎨 Design & Wireframing",
       description: "Create user interface designs, wireframes, and establish visual identity",
-      estimatedTime: "3-6 hours",
       aiTools: [
         {
           name: "Figma AI",
@@ -183,7 +180,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 3,
       title: "⚙️ Development Setup",
       description: "Set up your development environment, choose tools, and initialize project",
-      estimatedTime: "1-2 hours",
       aiTools: [
         {
           name: "GitHub Copilot",
@@ -222,7 +218,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 4,
       title: "🏗️ Core Development",
       description: "Build the main functionality, implement features, and write clean code",
-      estimatedTime: "60-80% of total time",
       aiTools: [
         {
           name: "GitHub Copilot",
@@ -267,7 +262,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 5,
       title: "🎨 Frontend Implementation",
       description: "Build user interfaces, implement responsive design, and add interactions",
-      estimatedTime: "4-8 hours",
       aiTools: [
         {
           name: "v0 by Vercel",
@@ -306,7 +300,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 6,
       title: "🔧 Backend & Database",
       description: "Set up server, database, APIs, and handle data management",
-      estimatedTime: "3-6 hours",
       aiTools: [
         {
           name: "Supabase AI",
@@ -345,7 +338,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 7,
       title: "🧪 Testing & Debugging",
       description: "Test functionality, fix bugs, and ensure quality",
-      estimatedTime: "2-4 hours",
       aiTools: [
         {
           name: "Testim",
@@ -384,7 +376,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 8,
       title: "🚀 Deployment & Launch",
       description: "Deploy your project, set up hosting, and make it live",
-      estimatedTime: "1-3 hours",
       aiTools: [
         {
           name: "Vercel AI",
@@ -423,7 +414,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 9,
       title: "📈 Polish & Optimization",
       description: "Improve performance, add final touches, and optimize user experience",
-      estimatedTime: "2-4 hours",
       aiTools: [
         {
           name: "Lighthouse AI",
@@ -462,7 +452,6 @@ const IdeaForgeAI: React.FC = () => {
       id: 10,
       title: "🎉 Documentation & Showcase",
       description: "Create documentation, demo videos, and prepare for presentation",
-      estimatedTime: "1-2 hours",
       aiTools: [
         {
           name: "Gitiles",
