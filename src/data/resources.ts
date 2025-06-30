@@ -40,6 +40,36 @@ export const categories: Category[] = [
     "icon": "🤖",
     "gradient": "from-blue-500 to-purple-600",
     "resources": [
+            {
+        "id": "googleAIStudio",
+        "name": "Google AI Studio",
+        "description": "A free, web-based tool for developers to prototype prompts and build applications using Google's Gemini models.",
+        "detailedDescription": "Google AI Studio is a browser-based IDE for rapid prototyping with generative models. It allows developers to test and iterate on prompts for the Gemini family of models, adjust parameters, and then export the code (e.g., Python, cURL) to integrate into their own applications via the Gemini API.",
+        "url": "https://aistudio.google.com",
+        "tags": ["Free", "AI", "Developers", "Prototyping", "Gemini"],
+        "difficulty": "beginner",
+        "type": "tool",
+        "isFree": true,
+        "rating": 4.6,
+        "reviewCount": 7850,
+        "featured": true,
+        "dateAdded": "2024-02-05",
+        "features": [
+          "Access to Gemini Pro and Gemini Pro Vision",
+          "Structured, freeform, and chat prompt modes",
+          "Multimodal input support (text, images)",
+          "Tunable model parameters (temperature, etc.)",
+          "One-click 'Get Code' for Python, cURL, etc.",
+          "API key generation for development",
+          "Free usage tier with generous rate limits"
+        ],
+        "pricing": {
+          "free": "Free access to Gemini models with a rate limit (e.g., 60 QPM)",
+          "paid": ["Pay-as-you-go via Google Cloud for production usage"]
+        },
+        "requirements": ["Google account", "Web browser", "Internet connection"],
+        "alternatives": ["OpenAI Playground", "Hugging Face Spaces", "Replicate", "Anthropic Console"]
+      },
       {
         "id": "chatgpt",
         "name": "ChatGPT",
