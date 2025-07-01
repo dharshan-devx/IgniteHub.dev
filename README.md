@@ -467,7 +467,7 @@ We welcome contributions from the community! Here's how you can help:
 ### **Connect With Us**
 - **LinkedIn**: [Dharshan Sondi](https://www.linkedin.com/in/dharshan-sondi-6a389a34a/)
 - **GitHub**: [dharshan-devx](https://github.com/dharshan-devx)
-- **Website**: [IgniteHub Live](https://ignitehub-teal.vercel.app/)
+- **Website**: [IgniteHub Live](https://ignitehub-beta.vercel.app/)
 
 ### **Business Inquiries**
 - **Partnerships**: Collaboration opportunities with organizations
@@ -511,7 +511,7 @@ IgniteHub is more than a platform—it's a **movement** to democratize innovatio
 
 **Ready to ignite your innovation journey?**
 
-🚀 **[Start Exploring IgniteHub](https://ignitehub-teal.vercel.app/)**
+🚀 **[Start Exploring IgniteHub](https://ignitehub-beta.vercel.app/)**
 
 ---
 
