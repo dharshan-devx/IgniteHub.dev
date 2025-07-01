@@ -5,7 +5,7 @@ export interface Resource {
   url: string;
   tags: string[];
   difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
-  type?: 'course' | 'tutorial' | 'article' | 'video' | 'book' | 'tool' | 'website' | 'platform' | 'app' | 'service' | 'community';
+  type?: 'course' | 'tutorial' | 'article' | 'video' | 'book' | 'tool' | 'website' | 'platform' | 'app' | 'service' | 'community' | 'model';
   isFree?: boolean;
   rating?: number;
   reviewCount?: number;
@@ -101,6 +101,94 @@ export const categories: Category[] = [
         },
         "requirements": ["Web browser", "Internet connection", "OpenAI account"],
         "alternatives": ["Claude", "Gemini", "Copilot", "Perplexity"]
+      },
+      
+      {
+        "id": "blackboxai",
+        "name": "Blackbox AI",
+        "description": "An AI coding assistant for developers that provides code completion, chat, and version control integration.",
+        "detailedDescription": "Blackbox AI is a tool designed to accelerate the software development process. It offers real-time code suggestions and completions in multiple programming languages, a dedicated AI chat for debugging and explaining code, and features like generating commit messages directly from code changes. It primarily integrates into IDEs like VS Code.",
+        "url": "https://www.blackbox.ai",
+        "tags": ["Free", "Paid", "AI", "Developers", "Coding"],
+        "difficulty": "beginner",
+        "type": "tool",
+        "isFree": true,
+        "rating": 4.5,
+        "reviewCount": 4500,
+        "featured": false,
+        "dateAdded": "2024-03-10",
+        "features": [
+          "AI code autocompletion",
+          "Code chat & explanation",
+          "Commit message generation",
+          "Code search from repositories",
+          "IDE integration (VS Code, etc.)",
+          "Code refactoring"
+        ],
+        "pricing": {
+          "free": "Free plan with limited features and usage",
+          "paid": ["Pro: ~$15/month for unlimited features and faster responses"]
+        },
+        "requirements": ["Web browser", "Optional IDE for extension", "Blackbox account"],
+        "alternatives": ["GitHub Copilot", "Tabnine", "Amazon CodeWhisperer", "Replit Ghostwriter"]
+      },
+      {
+        "id": "llama",
+        "name": "Llama",
+        "description": "A family of large language models from Meta, released with open weights for research and commercial use.",
+        "detailedDescription": "Llama (including Llama 2 and Llama 3) is a collection of foundational, pretrained, and fine-tuned generative text models released by Meta. Unlike consumer chatbots, Llama models are designed for developers and researchers to build upon, customize, and deploy in their own applications. They are known for their strong performance and permissive license, which has spurred widespread adoption in the open-source AI community.",
+        "url": "https://ai.meta.com/llama/",
+        "tags": ["Free", "AI", "Developers", "Research", "Open Source"],
+        "difficulty": "advanced",
+        "type": "model",
+        "isFree": true,
+        "rating": 4.9,
+        "reviewCount": 11200,
+        "featured": true,
+        "dateAdded": "2024-03-20",
+        "features": [
+          "Open weights models (multiple parameter sizes)",
+          "Pretrained and instruction-tuned versions",
+          "High performance on industry benchmarks",
+          "Commercially permissive license",
+          "Strong community support and ecosystem",
+          "Can be run locally or in the cloud"
+        ],
+        "pricing": {
+          "free": "Free for research and commercial use, subject to license terms",
+          "paid": ["Accessed via paid APIs from providers like Groq, Perplexity, Replicate, etc."]
+        },
+        "requirements": ["Technical knowledge for deployment", "Computing resources (local GPU or cloud)", "Adherence to Meta's license agreement"],
+        "alternatives": ["Mistral Models", "Claude Models (Anthropic)", "Falcon (TII)", "Gemma (Google)"]
+      },
+      {
+        "id": "metaai",
+        "name": "Meta AI",
+        "description": "Meta's free conversational AI assistant, powered by Llama 3, integrated into its apps and available on the web.",
+        "detailedDescription": "Meta AI is a multipurpose AI assistant designed for everyday users. It leverages the power of Meta's latest Llama models to provide conversational answers, generate creative text, and create images from text prompts in real-time. It is deeply integrated into Meta's family of apps (Facebook, Instagram, WhatsApp, Messenger) and also has a standalone web interface, making it a direct competitor to other leading AI assistants.",
+        "url": "https://www.meta.ai",
+        "tags": ["Free", "AI", "Chatbot", "Image Generation", "Llama 3"],
+        "difficulty": "beginner",
+        "type": "tool",
+        "isFree": true,
+        "rating": 4.5,
+        "reviewCount": 5600,
+        "featured": true,
+        "dateAdded": "2024-04-18",
+        "features": [
+          "Conversational chat powered by Llama 3",
+          "Real-time image generation as you type",
+          "Web search integration via Google & Bing",
+          "Integrated into WhatsApp, Instagram, and Messenger",
+          "Completely free to use",
+          "Understands context from chats within Meta apps"
+        ],
+        "pricing": {
+          "free": "Currently free to use",
+          "paid": []
+        },
+        "requirements": ["Web browser", "Internet connection", "Facebook account may be required"],
+        "alternatives": ["ChatGPT", "Google Gemini", "Perplexity", "Claude"]
       },
       {
         "id": "dalle3",
