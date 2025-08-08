@@ -3,7 +3,7 @@
 > **From Scattered Resources to Streamlined Innovation**  
 > A modern, AI-powered platform that transforms how young builders discover tools, learn skills, and bring ideas to life
 
----
+--
 
 ## 🌍 The Problem: Innovation Paralysis in the Digital Age
 
