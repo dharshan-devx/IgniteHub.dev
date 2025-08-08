@@ -1,7 +1,7 @@
 # IgniteHub 🚀 ~ The Ultimate Resource Hub for Young Innovators
 
 > **From Scattered Resources to Streamlined Innovation**  
-> A modern, AI-powered platform that transforms how young builders discover tools, learn skills, and bring ideas to life.
+> A modern, AI-powered platform that transforms how young builders discover tools, learn skills, and bring ideas to life
 
 ---
 
