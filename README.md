@@ -517,7 +517,7 @@ IgniteHub is more than a platform—it's a **movement** to democratize innovatio
 
 <div align="center">
 
-**Built with ❤️ by young innovators, for young innovators**
+**Built by young innovators, for young innovators**
 
 *IgniteHub ~ Where Innovation Meets Opportunity* 🚀
 
