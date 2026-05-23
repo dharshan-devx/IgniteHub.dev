@@ -1,35 +1,34 @@
 import { useState, useEffect } from 'react';
-import { supabase, ResourceReview, isSupabaseConfigured } from '../lib/supabase';
 import { toast } from 'sonner';
+import { ResourceReview } from '../lib/types';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useReviews = (resourceId?: string) => {
   const [reviews, setReviews] = useState<ResourceReview[]>([]);
   const [loading, setLoading] = useState(false);
-  const [userReview, setUserReview] = useState<ResourceReview | null>(null);
+  const [averageRating, setAverageRating] = useState<number | null>(null);
 
   // Fetch reviews for a resource
-  const fetchReviews = async (resourceId: string) => {
-    if (!isSupabaseConfigured()) {
-      console.log('Reviews feature requires Supabase configuration');
-      return;
-    }
-
+  const fetchReviews = async () => {
+    if (!resourceId) return;
+    
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('resource_reviews')
-        .select(`
-          *,
-          user_profiles (
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq('resource_id', resourceId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setReviews(data || []);
+      const savedReviewsStr = localStorage.getItem('igniteHub_reviews');
+      if (savedReviewsStr) {
+        const allReviews: ResourceReview[] = JSON.parse(savedReviewsStr);
+        const resourceReviews = allReviews.filter(r => r.resource_id === resourceId)
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          
+        setReviews(resourceReviews);
+        
+        if (resourceReviews.length > 0) {
+          const sum = resourceReviews.reduce((acc, rev) => acc + rev.rating, 0);
+          setAverageRating(Math.round((sum / resourceReviews.length) * 10) / 10);
+        } else {
+          setAverageRating(null);
+        }
+      }
     } catch (error) {
       console.error('Error fetching reviews:', error);
       toast.error('Failed to load reviews');
@@ -38,74 +37,45 @@ export const useReviews = (resourceId?: string) => {
     }
   };
 
-  // Fetch user's review for a resource
-  const fetchUserReview = async (resourceId: string) => {
-    if (!isSupabaseConfigured()) {
-      return;
+  const saveToStorage = (newReview: ResourceReview, allReviews: ResourceReview[]) => {
+    // If updating existing
+    const existingIndex = allReviews.findIndex(r => r.id === newReview.id);
+    let updatedReviews = [...allReviews];
+    
+    if (existingIndex >= 0) {
+      updatedReviews[existingIndex] = newReview;
+    } else {
+      updatedReviews.push(newReview);
     }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('resource_reviews')
-        .select('*')
-        .eq('resource_id', resourceId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      setUserReview(data);
-    } catch (error) {
-      console.error('Error fetching user review:', error);
-    }
+    
+    localStorage.setItem('igniteHub_reviews', JSON.stringify(updatedReviews));
   };
 
-  // Submit a review
-  const submitReview = async (
-    resourceId: string,
-    categoryId: string,
-    rating: number,
-    title?: string,
-    reviewText?: string,
-    pros?: string[],
-    cons?: string[]
-  ) => {
-    if (!isSupabaseConfigured()) {
-      toast.error('Reviews feature requires Supabase configuration');
-      return false;
-    }
+  // Submit or update a review
+  const submitReview = async (rating: number, reviewText?: string) => {
+    if (!resourceId) return false;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Please sign in to submit a review');
-        return false;
-      }
+      const savedReviewsStr = localStorage.getItem('igniteHub_reviews');
+      const allReviews: ResourceReview[] = savedReviewsStr ? JSON.parse(savedReviewsStr) : [];
+      
+      // Check if user already reviewed (using a generic local-user id)
+      const userId = 'local-user';
+      const existingReview = allReviews.find(r => r.resource_id === resourceId && r.user_id === userId);
 
-      const reviewData = {
+      const newReview: ResourceReview = {
+        id: existingReview ? existingReview.id : uuidv4(),
         resource_id: resourceId,
-        category_id: categoryId,
-        user_id: user.id,
+        user_id: userId,
         rating,
-        title,
         review_text: reviewText,
-        pros,
-        cons
+        created_at: existingReview ? existingReview.created_at : new Date().toISOString(),
+        is_edited: !!existingReview
       };
 
-      const { error } = await supabase
-        .from('resource_reviews')
-        .upsert(reviewData, {
-          onConflict: 'resource_id,user_id'
-        });
-
-      if (error) throw error;
-
-      toast.success('Review submitted successfully!');
-      await fetchReviews(resourceId);
-      await fetchUserReview(resourceId);
+      saveToStorage(newReview, allReviews);
+      toast.success(existingReview ? 'Review updated!' : 'Review submitted!');
+      await fetchReviews();
       return true;
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -114,104 +84,29 @@ export const useReviews = (resourceId?: string) => {
     }
   };
 
-  // Vote on a review
-  const voteOnReview = async (reviewId: string, isHelpful: boolean) => {
-    if (!isSupabaseConfigured()) {
-      toast.error('Reviews feature requires Supabase configuration');
-      return false;
-    }
-
+  // Report a review (Mocked)
+  const reportReview = async (reviewId: string, reason: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Please sign in to vote');
-        return false;
-      }
-
-      const { error } = await supabase
-        .from('review_votes')
-        .upsert({
-          review_id: reviewId,
-          user_id: user.id,
-          is_helpful: isHelpful
-        }, {
-          onConflict: 'review_id,user_id'
-        });
-
-      if (error) throw error;
-
-      toast.success('Vote recorded!');
-      if (resourceId) {
-        await fetchReviews(resourceId);
-      }
+      // Just mock success
+      toast.success('Review reported successfully');
       return true;
     } catch (error) {
-      console.error('Error voting on review:', error);
-      toast.error('Failed to record vote');
+      console.error('Error reporting review:', error);
+      toast.error('Failed to report review');
       return false;
     }
   };
-
-  // Report a resource
-  const reportResource = async (
-    resourceId: string,
-    categoryId: string,
-    reportType: string,
-    description?: string
-  ) => {
-    if (!isSupabaseConfigured()) {
-      toast.error('Reporting feature requires Supabase configuration');
-      return false;
-    }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Please sign in to report');
-        return false;
-      }
-
-      const { error } = await supabase
-        .from('resource_reports')
-        .insert({
-          resource_id: resourceId,
-          category_id: categoryId,
-          user_id: user.id,
-          report_type: reportType,
-          description
-        });
-
-      if (error) throw error;
-
-      toast.success('Report submitted. Thank you for helping improve our platform!');
-      return true;
-    } catch (error) {
-      console.error('Error reporting resource:', error);
-      toast.error('Failed to submit report');
-      return false;
-    }
-  };
-
-  // Calculate average rating
-  const averageRating = reviews.length > 0 
-    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
-    : 0;
 
   useEffect(() => {
-    if (resourceId && isSupabaseConfigured()) {
-      fetchReviews(resourceId);
-      fetchUserReview(resourceId);
-    }
+    fetchReviews();
   }, [resourceId]);
 
   return {
     reviews,
-    userReview,
     loading,
     averageRating,
     submitReview,
-    voteOnReview,
-    reportResource,
+    reportReview,
     fetchReviews
   };
 };

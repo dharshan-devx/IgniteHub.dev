@@ -1,6 +1,6 @@
 import React from 'react';
 import { Star, ThumbsUp, ThumbsDown, Flag } from 'lucide-react';
-import { ResourceReview } from '../../lib/supabase';
+import { ResourceReview } from '../../lib/types';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { useReviews } from '../../hooks/useReviews';

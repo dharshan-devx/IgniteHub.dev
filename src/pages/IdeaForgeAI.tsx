@@ -70,6 +70,18 @@ const IdeaForgeAI: React.FC = () => {
     countdown: number;
   } | null>(null);
 
+  const [userGeminiKey, setUserGeminiKey] = useState(() => {
+    return localStorage.getItem('user_gemini_api_key') || '';
+  });
+  const [showKeyInput, setShowKeyInput] = useState(false);
+
+  const handleSaveKey = (key: string) => {
+    setUserGeminiKey(key);
+    localStorage.setItem('user_gemini_api_key', key);
+  };
+
+  const DEFAULT_GEMINI_KEY = "AIzaSyCXpCTpehAZ99J4WM7zAfoOe9GD2drPXUY";
+
   const themes = [
     'AI & Machine Learning', 'EdTech', 'Gaming', 'Environment & Sustainability', 
     'Developer Tools', 'Web3 & Blockchain', 'Cybersecurity', 'FinTech', 
@@ -531,14 +543,17 @@ Return ONLY a valid JSON response in this exact format:
   "implementationSteps": ["Step 1", "Step 2", "Step 3", "Step 4", "Step 5"]
 }
 
-Make it creative, practical, and aligned with current technology trends. Ensure the innovation score reflects genuine uniqueness and market potential.`;
+Make it creative, practical, and aligned with current technology trends. Ensure the innovation score reflects genuine uniqueness and market potential (provide a highly realistic and specific score based on current market trends, not just standard rounded numbers).`;
   };
 
-  // Check if OpenAI API key is configured
-  const getOpenAIKey = () => {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    console.log('Checking OpenAI API Key:', apiKey ? 'Present' : 'Missing');
-    return apiKey && apiKey.trim() !== '' && !apiKey.includes('your_openai_api_key_here') ? apiKey : null;
+  // Check if Gemini API key is configured
+  const getGeminiKey = () => {
+    if (userGeminiKey && userGeminiKey.trim() !== '') {
+      console.log('Using BYOK Gemini API Key');
+      return userGeminiKey.trim();
+    }
+    console.log('Using Default Gemini API Key');
+    return DEFAULT_GEMINI_KEY;
   };
 
   // Rate limit countdown effect
@@ -618,44 +633,39 @@ Make it creative, practical, and aligned with current technology trends. Ensure 
     setLoading(true);
     setApiError(null);
     setRateLimitInfo(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     
     try {
-      const apiKey = getOpenAIKey();
+      const apiKey = getGeminiKey();
       
-      if (!apiKey) {
-        throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your environment variables.');
-      }
+      console.log('Making Gemini API request...');
 
-      console.log('Making OpenAI API request...');
-
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
+          system_instruction: {
+            parts: [{ text: "You are an expert project idea generator for young innovators and developers. Generate detailed, innovative, and feasible project ideas. Always respond with valid JSON only, no additional text or formatting." }]
+          },
+          contents: [
             {
-              role: "system",
-              content: "You are a creative project idea generator for young innovators. Always respond with valid JSON only, no additional text or formatting. Generate detailed, innovative, and feasible project ideas."
-            },
-            {
-              role: "user",
-              content: buildPrompt()
+              parts: [{ text: buildPrompt() }]
             }
           ],
-          max_tokens: 1200,
-          temperature: 0.8,
+          generationConfig: {
+            temperature: 0.8,
+            responseMimeType: "application/json"
+          }
         }),
       });
 
-      console.log('OpenAI API Response Status:', response.status);
+      console.log('Gemini API Response Status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('OpenAI API Error:', errorData);
+        console.error('Gemini API Error:', errorData);
         
         // Check if this is a rate limit error
         if (response.status === 429 || isRateLimitError(errorData)) {
@@ -671,17 +681,17 @@ Make it creative, practical, and aligned with current technology trends. Ensure 
           console.log(`Rate limit detected. Retry after ${retryAfter} seconds.`);
         } else {
           // For non-rate-limit errors, throw the error
-          throw new Error(`OpenAI API Error (${response.status}): ${errorData.error?.message || 'Unknown error'}`);
+          throw new Error(`Gemini API Error (${response.status}): ${errorData.error?.message || 'Unknown error'}`);
         }
       } else {
         // Successful response
         const data = await response.json();
-        console.log('OpenAI API Response:', data);
+        console.log('Gemini API Response:', data);
         
-        const content = data.choices?.[0]?.message?.content;
+        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!content) {
-          throw new Error('No response content from OpenAI API');
+          throw new Error('No response content from Gemini API');
         }
 
         // Clean the content to ensure it's valid JSON
@@ -784,7 +794,7 @@ Make it creative, practical, and aligned with current technology trends. Ensure 
   };
 
   const isApiKeyConfigured = () => {
-    return getOpenAIKey() !== null;
+    return true; // We always have a key configured now (either default or BYOK)
   };
 
   const formatTime = (seconds: number): string => {
@@ -806,33 +816,46 @@ Make it creative, practical, and aligned with current technology trends. Ensure 
         <div className="flex items-center justify-center mb-6">
           <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
             <Zap className="text-cyan-400 animate-pulse" size={20} />
-            <span className="text-white/90 text-sm">
-              {isApiKeyConfigured() ? 'AI-Powered Project Generator' : 'Demo Mode - Configure OpenAI API Key'}
+            <span className="text-white/90 text-sm flex items-center gap-1">
+              {userGeminiKey ? 'Gemini AI-Powered (Custom Key)' : 'Gemini AI-Powered Generator'}
             </span>
           </div>
         </div>
       </PageHeader>
 
       <ContentContainer className="max-w-6xl">
-        {/* API Key Status */}
-        {!isApiKeyConfigured() && (
-          <div className="mb-8 p-6 bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-500/30 rounded-xl">
-            <div className="flex items-start space-x-3">
-              <AlertCircle className="text-amber-400 mt-1 flex-shrink-0" size={24} />
-              <div>
-                <h3 className="text-amber-300 font-semibold mb-2">OpenAI API Key Required</h3>
-                <p className="text-amber-100/80 mb-3">
-                  To use the full AI-powered idea generation, please configure your OpenAI API key in the environment variables.
-                </p>
-                <div className="bg-amber-900/30 rounded-lg p-3 border border-amber-500/20">
-                  <p className="text-amber-200 text-sm font-mono">
-                    Add: VITE_OPENAI_API_KEY=your_api_key_here
-                  </p>
-                </div>
+        {/* BYOK Status */}
+        <div className="mb-8 p-6 bg-gradient-to-r from-blue-900/20 to-cyan-900/20 border border-cyan-500/30 rounded-xl transition-all duration-300">
+          <div className="flex items-start space-x-3">
+            <Wrench className="text-cyan-400 mt-1 flex-shrink-0" size={24} />
+            <div className="w-full">
+              <h3 className="text-cyan-300 font-semibold mb-2">Bring Your Own Key (BYOK)</h3>
+              <p className="text-cyan-100/80 mb-3 text-sm">
+                IdeaForge++ runs on Gemini AI. It comes with a default API key, but if limits are exceeded, you can use your own Gemini API key. Your key will be securely saved in your browser.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input 
+                  type="password"
+                  placeholder="Paste your Gemini API Key here (AIzaSy...)"
+                  value={userGeminiKey}
+                  onChange={(e) => handleSaveKey(e.target.value)}
+                  className="bg-gray-800/60 border-cyan-500/30 text-white placeholder-gray-500 max-w-md"
+                />
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20">
+                    <ExternalLink size={16} className="mr-2" />
+                    Get Key
+                  </Button>
+                </a>
+                {userGeminiKey && (
+                  <Button variant="ghost" onClick={() => handleSaveKey('')} className="text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                    Clear Key
+                  </Button>
+                )}
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Rate Limit Warning */}
         {rateLimitInfo?.isRateLimited && (
@@ -842,14 +865,14 @@ Make it creative, practical, and aligned with current technology trends. Ensure 
               <div>
                 <h3 className="text-orange-300 font-semibold mb-2">Rate Limit Reached</h3>
                 <p className="text-orange-100/80 mb-3">
-                  You've reached the OpenAI API rate limit. A fallback idea has been generated for you.
+                  You've reached the Gemini API rate limit. A fallback idea has been generated for you.
                 </p>
                 <div className="bg-orange-900/30 rounded-lg p-3 border border-orange-500/20">
                   <p className="text-orange-200 text-sm">
                     ⏱️ Try AI generation again in: <span className="font-mono font-bold">{formatTime(rateLimitInfo.countdown)}</span>
                   </p>
-                  <p className="text-orange-200/70 text-xs mt-1">
-                    Tip: Upgrade your OpenAI plan at platform.openai.com/account/billing for higher rate limits
+                  <p className="text-orange-200/70 text-xs mt-1 cursor-pointer hover:underline text-cyan-400" onClick={() => setShowKeyInput(true)}>
+                    Tip: Add your own Gemini API Key above to bypass default rate limits.
                   </p>
                 </div>
               </div>
@@ -865,8 +888,8 @@ Make it creative, practical, and aligned with current technology trends. Ensure 
               <div>
                 <h3 className="text-red-300 font-semibold mb-2">API Error</h3>
                 <p className="text-red-100/80">{apiError}</p>
-                <p className="text-red-200/60 text-sm mt-2">
-                  Using fallback idea generation. Please check your OpenAI API key and try again.
+                <p className="text-red-200/60 text-sm mt-2 cursor-pointer hover:underline text-cyan-400" onClick={() => setShowKeyInput(true)}>
+                  Using fallback idea generation. Please check your Gemini API key and try again.
                 </p>
               </div>
             </div>

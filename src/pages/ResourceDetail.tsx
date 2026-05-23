@@ -255,12 +255,6 @@ const ResourceDetail: React.FC = () => {
                 <CardTitle>Quick Info</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {resource.dateAdded && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar size={16} className="mr-2" />
-                    Added {new Date(resource.dateAdded).toLocaleDateString()}
-                  </div>
-                )}
                 
                 <div className="flex items-center text-sm text-gray-600">
                   <Tag size={16} className="mr-2" />

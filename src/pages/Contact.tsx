@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Mail, MessageSquare, Send, CheckCircle, AlertCircle, Database, Wifi } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { sql, isNeonConfigured } from '../lib/neon';
 
 import PageHeader from '../components/layout/PageHeader';
 import ContentContainer from '../components/layout/ContentContainer';
@@ -31,34 +31,31 @@ const ContactPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'fallback'>('checking');
 
-  // Check Supabase connection on component mount
+  // Check Neon connection on component mount
   useEffect(() => {
     const checkConnection = async () => {
-      if (!isSupabaseConfigured()) {
-        console.log('Supabase not configured, using email fallback');
+      if (!isNeonConfigured() || !sql) {
+        console.log('Neon not configured, using email fallback');
         setConnectionStatus('fallback');
         return;
       }
 
       try {
-        console.log('Testing Supabase connection...');
+        console.log('Testing Neon connection...');
         
         // Simple connection test with timeout
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Connection timeout')), 5000);
         });
 
-        const connectionPromise = supabase
-          .from('contacts')
-          .select('count')
-          .limit(1);
+        const connectionPromise = sql`SELECT 1`;
 
         await Promise.race([connectionPromise, timeoutPromise]);
         
-        console.log('Supabase connection successful');
+        console.log('Neon connection successful');
         setConnectionStatus('connected');
       } catch (error: any) {
-        console.warn('Supabase connection failed, using email fallback:', error.message);
+        console.warn('Neon connection failed, using email fallback:', error.message);
         setConnectionStatus('fallback');
       }
     };
@@ -100,30 +97,21 @@ const ContactPage = () => {
     return true;
   };
 
-  // Submit to Supabase database
-  const submitToSupabase = async () => {
+  // Submit to Neon database
+  const submitToNeon = async () => {
     try {
-      console.log('Submitting to Supabase database...');
+      if (!sql) throw new Error('Neon database not initialized');
+      console.log('Submitting to Neon database...');
 
-      const { error } = await supabase
-        .from('contacts')
-        .insert([
-          {
-            name: formData.name.trim(),
-            email: formData.email.trim(),
-            message: formData.message.trim()
-          }
-        ]);
+      await sql`
+        INSERT INTO contacts (name, email, message)
+        VALUES (${formData.name.trim()}, ${formData.email.trim()}, ${formData.message.trim()})
+      `;
 
-      if (error) {
-        console.error('Supabase submission error:', error);
-        throw new Error(`Database error: ${error.message}`);
-      }
-
-      console.log('Supabase submission successful');
+      console.log('Neon submission successful');
       return { success: true };
     } catch (error: any) {
-      console.error('Supabase operation failed:', error);
+      console.error('Neon operation failed:', error);
       throw error;
     }
   };
@@ -174,18 +162,18 @@ const ContactPage = () => {
     try {
       let submissionResult = null;
 
-      // Try Supabase first if connected
+      // Try Neon first if connected
       if (connectionStatus === 'connected') {
         try {
-          submissionResult = await submitToSupabase();
+          submissionResult = await submitToNeon();
           console.log('Message saved to database');
-        } catch (supabaseError: any) {
-          console.warn('Supabase submission failed, falling back to FormSubmit:', supabaseError.message);
+        } catch (neonError: any) {
+          console.warn('Neon submission failed, falling back to FormSubmit:', neonError.message);
           // Continue to FormSubmit fallback
         }
       }
 
-      // Use FormSubmit if Supabase failed or not available
+      // Use FormSubmit if Neon failed or not available
       if (!submissionResult) {
         try {
           submissionResult = await submitToFormSubmit();

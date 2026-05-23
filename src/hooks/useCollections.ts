@@ -1,37 +1,32 @@
 import { useState, useEffect } from 'react';
-import { supabase, UserCollection, CollectionItem, isSupabaseConfigured } from '../lib/supabase';
 import { toast } from 'sonner';
+import { UserCollection, CollectionItem } from '../lib/types';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useCollections = () => {
   const [collections, setCollections] = useState<UserCollection[]>([]);
+  const [collectionItems, setCollectionItems] = useState<CollectionItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch user's collections
+  // Load from local storage
   const fetchCollections = async () => {
-    if (!isSupabaseConfigured()) {
-      console.log('Collections feature requires Supabase configuration');
-      return;
-    }
-
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('user_collections')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setCollections(data || []);
+      const savedCollections = localStorage.getItem('igniteHub_collections');
+      const savedItems = localStorage.getItem('igniteHub_collectionItems');
+      
+      if (savedCollections) setCollections(JSON.parse(savedCollections));
+      if (savedItems) setCollectionItems(JSON.parse(savedItems));
     } catch (error) {
       console.error('Error fetching collections:', error);
-      toast.error('Failed to load collections');
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveToStorage = (newCollections: UserCollection[], newItems: CollectionItem[]) => {
+    localStorage.setItem('igniteHub_collections', JSON.stringify(newCollections));
+    localStorage.setItem('igniteHub_collectionItems', JSON.stringify(newItems));
   };
 
   // Create a new collection
@@ -42,39 +37,24 @@ export const useCollections = () => {
     color: string = '#8B5CF6',
     icon: string = '📚'
   ) => {
-    if (!isSupabaseConfigured()) {
-      toast.error('Collections feature requires Supabase configuration');
-      return false;
-    }
+    const newCollection: UserCollection = {
+      id: uuidv4(),
+      user_id: 'local-user',
+      name,
+      description,
+      is_public: isPublic,
+      color,
+      icon,
+      items_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Please sign in to create collections');
-        return false;
-      }
-
-      const { error } = await supabase
-        .from('user_collections')
-        .insert({
-          user_id: user.id,
-          name,
-          description,
-          is_public: isPublic,
-          color,
-          icon
-        });
-
-      if (error) throw error;
-
-      toast.success('Collection created successfully!');
-      await fetchCollections();
-      return true;
-    } catch (error) {
-      console.error('Error creating collection:', error);
-      toast.error('Failed to create collection');
-      return false;
-    }
+    const newCollections = [newCollection, ...collections];
+    setCollections(newCollections);
+    saveToStorage(newCollections, collectionItems);
+    toast.success('Collection created successfully!');
+    return true;
   };
 
   // Add resource to collection
@@ -84,108 +64,68 @@ export const useCollections = () => {
     categoryId: string,
     notes?: string
   ) => {
-    if (!isSupabaseConfigured()) {
-      toast.error('Collections feature requires Supabase configuration');
+    const newItem: CollectionItem = {
+      id: uuidv4(),
+      collection_id: collectionId,
+      resource_id: resourceId,
+      category_id: categoryId,
+      notes,
+      added_at: new Date().toISOString()
+    };
+
+    // Prevent duplicates
+    if (collectionItems.some(i => i.collection_id === collectionId && i.resource_id === resourceId)) {
+      toast.error('Resource already in collection');
       return false;
     }
 
-    try {
-      const { error } = await supabase
-        .from('collection_items')
-        .insert({
-          collection_id: collectionId,
-          resource_id: resourceId,
-          category_id: categoryId,
-          notes
-        });
+    const newItems = [...collectionItems, newItem];
+    
+    // Update items count
+    const newCollections = collections.map(c => 
+      c.id === collectionId ? { ...c, items_count: c.items_count + 1, updated_at: new Date().toISOString() } : c
+    );
 
-      if (error) throw error;
-
-      toast.success('Added to collection!');
-      await fetchCollections();
-      return true;
-    } catch (error) {
-      console.error('Error adding to collection:', error);
-      toast.error('Failed to add to collection');
-      return false;
-    }
+    setCollectionItems(newItems);
+    setCollections(newCollections);
+    saveToStorage(newCollections, newItems);
+    
+    toast.success('Added to collection!');
+    return true;
   };
 
   // Remove resource from collection
   const removeFromCollection = async (collectionId: string, resourceId: string) => {
-    if (!isSupabaseConfigured()) {
-      toast.error('Collections feature requires Supabase configuration');
-      return false;
-    }
+    const newItems = collectionItems.filter(i => !(i.collection_id === collectionId && i.resource_id === resourceId));
+    
+    // Update items count
+    const newCollections = collections.map(c => 
+      c.id === collectionId ? { ...c, items_count: Math.max(0, c.items_count - 1), updated_at: new Date().toISOString() } : c
+    );
 
-    try {
-      const { error } = await supabase
-        .from('collection_items')
-        .delete()
-        .eq('collection_id', collectionId)
-        .eq('resource_id', resourceId);
-
-      if (error) throw error;
-
-      toast.success('Removed from collection');
-      await fetchCollections();
-      return true;
-    } catch (error) {
-      console.error('Error removing from collection:', error);
-      toast.error('Failed to remove from collection');
-      return false;
-    }
+    setCollectionItems(newItems);
+    setCollections(newCollections);
+    saveToStorage(newCollections, newItems);
+    
+    toast.success('Removed from collection');
+    return true;
   };
 
   // Get collection items
   const getCollectionItems = async (collectionId: string): Promise<CollectionItem[]> => {
-    if (!isSupabaseConfigured()) {
-      return [];
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('collection_items')
-        .select('*')
-        .eq('collection_id', collectionId)
-        .order('added_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching collection items:', error);
-      return [];
-    }
+    return collectionItems.filter(i => i.collection_id === collectionId)
+      .sort((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime());
   };
 
   // Check if resource is in any collection
   const isInCollection = async (resourceId: string): Promise<string[]> => {
-    if (!isSupabaseConfigured()) {
-      return [];
-    }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      const { data, error } = await supabase
-        .from('collection_items')
-        .select('collection_id')
-        .eq('resource_id', resourceId)
-        .in('collection_id', collections.map(c => c.id));
-
-      if (error) throw error;
-      return data?.map(item => item.collection_id) || [];
-    } catch (error) {
-      console.error('Error checking collection membership:', error);
-      return [];
-    }
+    return collectionItems
+      .filter(i => i.resource_id === resourceId)
+      .map(i => i.collection_id);
   };
 
   useEffect(() => {
-    if (isSupabaseConfigured()) {
-      fetchCollections();
-    }
+    fetchCollections();
   }, []);
 
   return {

@@ -5,6 +5,10 @@
 
 ---
 
+
+
+---
+
 ## 🌍 The Problem: Innovation Paralysis in the Digital Age
 
 ### The Real-World Challenge
@@ -253,13 +257,12 @@ To eliminate the friction between brilliant ideas and successful execution by pr
 - **Routing**: React Router for seamless navigation
 
 ### **Backend & Database**
-- **Database**: Supabase (PostgreSQL) for robust data management
-- **Authentication**: Supabase Auth for secure user management
-- **Real-time Features**: Supabase real-time subscriptions
-- **File Storage**: Supabase Storage for media assets
+- **Database**: Neon (Serverless PostgreSQL) for secure contact form management
+- **Authentication**: Local storage for anonymous visitor sessions (Collections, Reviews)
+- **Security**: Restricted PostgreSQL roles for secure frontend submissions
 
 ### **AI Integration**
-- **OpenAI API**: GPT-4 for intelligent project generation
+- **Gemini API**: Gemini 1.5/2.5 Flash for intelligent project generation via IdeaForge++
 - **Custom Prompts**: Carefully crafted prompts for optimal results
 - **Fallback Systems**: Graceful degradation when AI services are unavailable
 - **Rate Limiting**: Responsible API usage and cost management
@@ -313,12 +316,11 @@ npm run dev
 
 #### **Environment Configuration**
 ```env
-# Supabase Configuration (Optional)
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+# Neon Database Configuration
+VITE_NEON_DB_URL=postgresql://user:password@your_endpoint.neon.tech/neondb?sslmode=require
 
-# OpenAI API (For IdeaForge++)
-VITE_OPENAI_API_KEY=your_openai_api_key
+# Gemini API (For IdeaForge++)
+VITE_GEMINI_API_KEY=your_gemini_api_key
 
 # Analytics (Optional)
 VITE_ANALYTICS_ID=your_analytics_id
