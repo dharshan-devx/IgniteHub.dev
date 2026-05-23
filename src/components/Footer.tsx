@@ -17,31 +17,45 @@ const Footer: React.FC = () => {
         <div>
           <h4 className="text-lg font-semibold mb-4 text-white">Quick Links</h4>
           <nav className="flex flex-col gap-2">
-            <Link to="/" className="text-gray-300 hover:text-white">Home</Link>
-            <Link to="/resources" className="text-gray-300 hover:text-white">Resources</Link>
-            <Link to="/about" className="text-gray-300 hover:text-white">About</Link>
-            <Link to="/contact" className="text-gray-300 hover:text-white">Contact</Link>
+            <Link to="/" className="text-gray-300 hover:text-white">
+              Home
+            </Link>
+            <Link to="/resources" className="text-gray-300 hover:text-white">
+              Resources
+            </Link>
+            <Link to="/about" className="text-gray-300 hover:text-white">
+              About
+            </Link>
+            <Link to="/contact" className="text-gray-300 hover:text-white">
+              Contact
+            </Link>
           </nav>
         </div>
 
         <div>
           <h4 className="text-lg font-semibold mb-4 text-white">Connect</h4>
-          <div className="flex space-x-4">
+
+          <div className="flex space-x-4 mb-4">
             <a
-              href="https://www.linkedin.com/in/dharshan-sondi-6a389a34a/"
+              href="https://www.linkedin.com/in/dharshansondi/"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
             >
               <Linkedin size={20} />
             </a>
-            <Link
-              to="/contact"
+
+            <a
+              href="mailto:dharshansondi.dev@gmail.com"
               className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
             >
               <Mail size={20} />
-            </Link>
+            </a>
           </div>
+
+          <p className="text-sm text-gray-300 break-all">
+            dharshansondi.dev@gmail.com
+          </p>
         </div>
       </div>
 
@@ -50,6 +64,7 @@ const Footer: React.FC = () => {
           <Rocket size={16} className="text-sky-400" />
           Launching dreams into reality
         </div>
+
         © 2025 IgniteHub. Sondi Dharshan. All rights reserved.
       </div>
     </footer>
