@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 export const metadata: Metadata = {
-  title: "IgniteHub 🚀 - The Ultimate Resource Hub for Young Innovators",
+  title: "IgniteHub",
   description: "A modern, AI-powered platform that transforms how young builders discover tools, learn skills, and bring ideas to life.",
   keywords: ["resources", "innovation", "tools", "community", "hackathons", "funding"],
 };
