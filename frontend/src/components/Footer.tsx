@@ -42,15 +42,14 @@ const Footer: React.FC = () => {
               <Linkedin size={20} />
             </a>
             <a
-              href="mailto:dharshansondi.dev@gmail.com"
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=dharshansondi.dev@gmail.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
             >
               <Mail size={20} />
             </a>
           </div>
-          <p className="text-sm text-gray-300 break-all">
-            dharshansondi.dev@gmail.com
-          </p>
         </div>
       </div>
       <div className="border-t border-white/10 mt-8 pt-6 text-center text-sm text-gray-300">
