@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Zap, Loader2, Sparkles, Code, Users, Clock, Target, Lightbulb, Wrench, Star, ArrowRight, RotateCcw, AlertCircle, CheckCircle, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { Zap, Loader2, Sparkles, Code, Users, Clock, Target, Lightbulb, Wrench, Star, ArrowRight, RotateCcw, AlertCircle, CheckCircle, ExternalLink, ChevronDown, ChevronUp, HelpCircle, X } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import ContentContainer from '@/components/layout/ContentContainer';
 import { Button } from '@/components/ui/button';
@@ -54,18 +54,11 @@ export default function IdeaForgePage() {
     retryAfter: number;
     countdown: number;
   } | null>(null);
-  const [userGeminiKey, setUserGeminiKey] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('user_gemini_api_key') || '';
-    }
-    return '';
-  });
+  const [userGeminiKey, setUserGeminiKey] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const handleSaveKey = (key: string) => {
     setUserGeminiKey(key);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('user_gemini_api_key', key);
-    }
   };
   const themes = [
     'AI & Machine Learning', 'EdTech', 'Gaming', 'Environment & Sustainability', 
@@ -643,6 +636,10 @@ export default function IdeaForgePage() {
                     Get Key
                   </Button>
                 </a>
+                <Button variant="outline" className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20" onClick={() => setShowHelpModal(true)}>
+                  <HelpCircle size={16} className="mr-2" />
+                  What is this?
+                </Button>
                 {userGeminiKey && (
                   <Button variant="ghost" onClick={() => handleSaveKey('')} className="text-red-400 hover:text-red-300 hover:bg-red-500/10">
                     Clear Key
@@ -682,8 +679,9 @@ export default function IdeaForgePage() {
               <div>
                 <h3 className="text-red-300 font-semibold mb-2">API Error</h3>
                 <p className="text-red-100/80">{apiError}</p>
-                <p className="text-red-200/60 text-sm mt-2 cursor-pointer hover:underline text-cyan-400" onClick={() => setShowKeyInput(true)}>
-                  Using fallback idea generation. Please check your Gemini API key and try again.
+                <p className="text-red-200/60 text-sm mt-2 cursor-pointer hover:underline" onClick={() => setShowKeyInput(true)}>
+                  {apiError || 'An internal server error occurred.'} <br />
+                  Gemini is temporarily overloaded. Please retry in a few moments.
                 </p>
               </div>
             </div>
@@ -1157,6 +1155,60 @@ export default function IdeaForgePage() {
                     }
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Help Modal for BYOK */}
+        {showHelpModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-gray-900 border border-cyan-500/30 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative">
+              <button 
+                onClick={() => setShowHelpModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="flex items-center space-x-3 mb-6">
+                <Lightbulb className="text-cyan-400" size={28} />
+                <h2 className="text-2xl font-bold text-white">Understanding BYOK</h2>
+              </div>
+              
+              <div className="space-y-4 text-gray-300">
+                <p>
+                  <strong className="text-cyan-300">What is Gemini?</strong><br />
+                  Gemini is a powerful Artificial Intelligence made by Google. It acts like a super-smart assistant that helps us generate these amazing project ideas!
+                </p>
+                
+                <p>
+                  <strong className="text-cyan-300">What is BYOK (Bring Your Own Key)?</strong><br />
+                  Like any premium service, using Gemini AI costs a tiny bit every time we ask it to think. We provide a default key so everyone can try it, but it has limits (Rate Limits) to prevent spam. By bringing your own "Key", you skip the line and get unlimited access!
+                </p>
+                
+                <p>
+                  <strong className="text-cyan-300">How to get your own key:</strong>
+                </p>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li>Click the <strong>Get Key</strong> button.</li>
+                  <li>Sign in with your Google account.</li>
+                  <li>Click <strong>Create API Key</strong>.</li>
+                  <li>Copy the long secret text (it starts with <code className="text-cyan-400 bg-gray-800 px-1 rounded">AIzaSy...</code>).</li>
+                  <li>Paste it into the text box here!</li>
+                </ol>
+                
+                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mt-4">
+                  <p className="text-sm text-blue-200">
+                    <strong>Is it safe?</strong> Yes! Your key is only used for this specific request and we do not save it on our servers. When you refresh the page, it's completely cleared from memory!
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-8 flex justify-end">
+                <Button onClick={() => setShowHelpModal(false)} className="bg-cyan-600 hover:bg-cyan-700 text-white">
+                  Got it, thanks!
+                </Button>
               </div>
             </div>
           </div>

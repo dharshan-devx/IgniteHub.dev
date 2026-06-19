@@ -26,21 +26,23 @@ def add_exception_handlers(app: FastAPI) -> None:
         logger.warning(
             "AppError: %s (status: %d) at %s", exc.message, exc.status_code, request.url
         )
+        origin = request.headers.get("origin", "*")
         return JSONResponse(
             status_code=exc.status_code,
             content={"detail": exc.message, "status": "error"},
+            headers={"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"}
         )
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-                                                                          
-                                                            
         if isinstance(exc, HTTPException):
             raise exc
         logger.error(
             "Unhandled exception at %s: %s", request.url, str(exc), exc_info=True
         )
+        origin = request.headers.get("origin", "*")
         return JSONResponse(
             status_code=500,
             content={"detail": "An internal server error occurred.", "status": "error"},
+            headers={"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"}
         )
