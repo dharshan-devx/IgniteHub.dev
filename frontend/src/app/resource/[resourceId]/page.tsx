@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useEffect, useState } from 'react';
+import React, { use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink, Tag, Clock, Users, Globe, DollarSign, Zap, CheckCircle, AlertCircle } from 'lucide-react';
 import { categories } from '@/data/resources';
@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface PageProps {
   params: Promise<{ resourceId: string }>;
@@ -18,8 +17,6 @@ interface PageProps {
 
 export default function ResourceDetailPage({ params }: PageProps) {
   const { resourceId } = use(params);
-  const { trackResourceView } = useAnalytics();
-  const [viewStartTime] = useState(Date.now());
   
   // Find the resource across all categories
   let resource = null;
@@ -33,19 +30,6 @@ export default function ResourceDetailPage({ params }: PageProps) {
       break;
     }
   }
-
-  useEffect(() => {
-    if (resource && categoryId) {
-      // Track the resource view
-      trackResourceView(resource.id, categoryId);
-      
-      // Track view duration when component unmounts
-      return () => {
-        const duration = Math.floor((Date.now() - viewStartTime) / 1000);
-        trackResourceView(resource.id, categoryId, duration);
-      };
-    }
-  }, [resource, categoryId, trackResourceView, viewStartTime]);
 
   if (!resource) {
     return (

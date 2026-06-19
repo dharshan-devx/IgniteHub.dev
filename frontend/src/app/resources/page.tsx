@@ -176,7 +176,7 @@ export default function ResourcesPage() {
             {/* Categories View */}
             {(!searchTerm.trim() || activeTab === 'categories') && processedCategories.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {processedCategories.map((category, index) => (
+                {processedCategories.map((category: any, index: number) => (
                   <CategoryPreviewCard
                     key={category.id}
                     category={category}
