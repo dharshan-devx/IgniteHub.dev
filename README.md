@@ -302,37 +302,70 @@ To eliminate the friction between brilliant ideas and successful execution by pr
 # Clone the repository
 git clone https://github.com/dharshan-devx/IgniteHub.git
 cd IgniteHub
+```
 
-# Install dependencies
+**1. Backend Setup (FastAPI)**
+```bash
+cd backend
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Set up backend environment variables
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY and DATABASE_URL
+
+# Start the FastAPI server (runs on http://localhost:8000 by default)
+uvicorn app.main:app --reload
+```
+
+**2. Frontend Setup (Next.js)**
+```bash
+# Open a new terminal and navigate to the frontend directory
+cd frontend
+
+# Install Node dependencies
 npm install
 
-# Set up environment variables
+# Set up frontend environment variables
 cp .env.example .env
-# Edit .env with your configuration
+# Ensure NEXT_PUBLIC_API_URL is pointing to your backend (e.g., http://localhost:8000)
 
-# Start development server
+# Start the Next.js development server (runs on http://localhost:3000)
 npm run dev
 ```
 
 #### **Environment Configuration**
+
+**Backend `.env`**
 ```env
-# Neon Database Configuration
-VITE_NEON_DB_URL=postgresql://user:password@your_endpoint.neon.tech/neondb?sslmode=require
+GEMINI_API_KEY="your_google_gemini_api_key_here"
+DATABASE_URL="postgresql://user:password@host/dbname"
+ALLOWED_ORIGINS="http://localhost:3000"
+ENVIRONMENT="development"
+```
 
-# Gemini API (For IdeaForge++)
-VITE_GEMINI_API_KEY=your_gemini_api_key
-
-# Analytics (Optional)
-VITE_ANALYTICS_ID=your_analytics_id
+**Frontend `.env`**
+```env
+NEXT_PUBLIC_API_URL="http://localhost:8000"
 ```
 
 #### **Available Scripts**
+
+*Frontend (in `/frontend`):*
 ```bash
 npm run dev          # Start development server
 npm run build        # Build for production
-npm run preview      # Preview production build
+npm run start        # Start production server
 npm run lint         # Run ESLint
-npm run deploy       # Deploy to production
+```
+
+*Backend (in `/backend`):*
+```bash
+uvicorn app.main:app --reload # Start development server
 ```
 
 ---
@@ -476,6 +509,50 @@ We welcome contributions from the community! Here's how you can help:
 - **Sponsorships**: Support the platform and reach our community
 - **Custom Solutions**: Tailored implementations for specific needs
 - **Speaking Engagements**: Founder available for events and conferences
+
+---
+
+## 🚀 Production Deployment Guide
+
+IgniteHub is architected to run as a split-stack deployment:
+1. **Frontend**: Next.js App Router deployed on Vercel.
+2. **Backend**: FastAPI Web Service deployed on Render.
+3. **Database**: PostgreSQL database (managed via Render or Neon).
+
+### 🛠️ Backend Deployment on Render
+
+The backend deployment is orchestrated via the root `render.yaml` file.
+
+1. **Deploy using Render Blueprints**:
+   - Go to [Render Dashboard](https://dashboard.render.com/) and click **New > Blueprint**.
+   - Connect your GitHub repository.
+   - Render will parse `render.yaml` and configure the **FastAPI Web Service** and the **PostgreSQL database**.
+2. **Environment Variables on Render**:
+   - Ensure the following environment variables are set in your web service settings:
+     - `GEMINI_API_KEY`: Your Google Gemini API Studio key. (Mandatory for IdeaForge++ AI tool)
+     - `ALLOWED_ORIGINS`: Comma-separated domains allowed to connect to the backend (e.g. `https://your-app.vercel.app`).
+     - `ENVIRONMENT`: Set to `production`.
+
+### ⚡ Frontend Deployment on Vercel
+
+The frontend Next.js app is deployed to Vercel.
+
+1. **Create Vercel Project**:
+   - Go to [Vercel](https://vercel.com/) and import your repository.
+   - Set the **Root Directory** setting to `frontend`.
+   - Vercel will automatically configure the project as a Next.js application.
+2. **Environment Variables on Vercel**:
+   - Add `NEXT_PUBLIC_API_URL` under Environment Variables, pointing to your deployed Render backend (e.g. `https://ignitehub-backend.onrender.com`).
+3. **Trigger Build**:
+   - Save and deploy. The production headers in `frontend/vercel.json` will automatically apply.
+
+### 📋 Pre-Deployment Checklist
+- [x] Hardcoded secrets removed from both backend and frontend.
+- [x] Pydantic `email-validator` dependency added to `backend/requirements.txt`.
+- [x] PostgreSQL connection pool configured via psycopg2 `ThreadedConnectionPool`.
+- [x] Custom dynamic CORS origins middleware configured to use `ALLOWED_ORIGINS`.
+- [x] Dedicated `/health` health-check endpoint configured in FastAPI.
+- [x] Local environment configuration templates (`.env.example`) present for frontend and backend.
 
 ---
 
