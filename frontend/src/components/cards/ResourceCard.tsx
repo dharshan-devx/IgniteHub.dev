@@ -3,16 +3,14 @@ import React from 'react';
 import { ExternalLink, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { Resource } from '../../data/resources';
-
 interface ResourceCardProps {
   resource: Resource;
   categoryId?: string;
 }
-
 const ResourceCard: React.FC<ResourceCardProps> = ({ resource, categoryId = '' }) => {
   return (
     <div className="flex flex-col justify-between h-full border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 bg-white relative group">
-      {/* Header */}
+      {}
       <div className="mb-4">
         <div className="flex items-start justify-between">
           <Link 
@@ -33,14 +31,12 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, categoryId = '' }
             <ExternalLink size={18} className="text-purple-600" />
           </a>
         </div>
-
         <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
           {resource.description}
         </p>
       </div>
-
       <div className="space-y-3">
-        {/* Badges */}
+        {}
         <div className="flex flex-wrap gap-2">
           {resource.featured && (
             <span className="inline-block px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-medium">
@@ -63,8 +59,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, categoryId = '' }
             </span>
           )}
         </div>
-
-        {/* Tags */}
+        {}
         <div className="flex flex-wrap gap-2">
           {resource.tags.slice(0, 4).map((tag, index) => (
             <span
@@ -80,8 +75,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, categoryId = '' }
             </span>
           )}
         </div>
-
-        {/* Action Buttons */}
+        {}
         <div className="flex items-center space-x-2 pt-2">
           <Link
             href={`/resource/${resource.id}`}
@@ -92,11 +86,9 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, categoryId = '' }
           </Link>
         </div>
       </div>
-
-      {/* Hover ring effect */}
+      {}
       <div className="absolute inset-0 rounded-2xl ring-0 ring-purple-300/40 group-hover:ring-4 transition-all pointer-events-none" />
     </div>
   );
 };
-
 export default ResourceCard;

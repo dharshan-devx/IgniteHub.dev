@@ -1,11 +1,9 @@
 "use client";
-
 import { useState, useEffect } from 'react';
 import { Mail, MessageSquare, Send, CheckCircle, AlertCircle, Database, Wifi } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import ContentContainer from '@/components/layout/ContentContainer';
 import { contactApi } from '@/lib/api';
-
 const contactMethods = [
   {
     icon: <Mail className="text-purple-600" size={24} />,
@@ -20,7 +18,6 @@ const contactMethods = [
       'Connect with fellow young innovators, showcase your projects, exchange ideas, and explore opportunities to collaborate and grow together.'
   }
 ];
-
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -31,8 +28,6 @@ export default function ContactPage() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'fallback'>('checking');
-
-  // Check backend connection status on component mount
   useEffect(() => {
     const checkConnection = async () => {
       try {
@@ -47,11 +42,8 @@ export default function ContactPage() {
         setConnectionStatus('fallback');
       }
     };
-
     checkConnection();
   }, []);
-
-  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -59,8 +51,6 @@ export default function ContactPage() {
       [name]: value
     }));
   };
-
-  // Validate form fields
   const validateForm = () => {
     if (!formData.name.trim()) {
       setErrorMessage('Name is required');
@@ -84,20 +74,15 @@ export default function ContactPage() {
     }
     return true;
   };
-
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitStatus('idle');
     setErrorMessage('');
-
     if (!validateForm()) {
       setSubmitStatus('error');
       return;
     }
-
     setIsSubmitting(true);
-
     try {
       await contactApi.submit({
         name: formData.name.trim(),
@@ -117,8 +102,6 @@ export default function ContactPage() {
       setIsSubmitting(false);
     }
   };
-
-  // Clear status messages after 7 seconds
   useEffect(() => {
     if (submitStatus !== 'idle') {
       const timer = setTimeout(() => {
@@ -128,7 +111,6 @@ export default function ContactPage() {
       return () => clearTimeout(timer);
     }
   }, [submitStatus]);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader
@@ -136,7 +118,6 @@ export default function ContactPage() {
         subtitle="Have a suggestion, question, or want to contribute? We'd love to hear from you!"
         gradient="from-purple-600 to-pink-600"
       />
-
       <ContentContainer className="max-w-4xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
@@ -154,7 +135,6 @@ export default function ContactPage() {
                 </div>
               ))}
             </div>
-
             <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Want to Contribute?
@@ -164,7 +144,6 @@ export default function ContactPage() {
                 or if you'd like to help curate content, let us know. We're building this together.
               </p>
             </div>
-
             {/* Direct Contact Info */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center">
@@ -177,7 +156,6 @@ export default function ContactPage() {
                 </div>
               </div>
             </div>
-
             {/* Connection Status Info */}
             <div className="mt-4 p-4 border rounded-lg bg-white">
               <div className="flex items-center">
@@ -215,11 +193,9 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
-
           <div>
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
-
               {/* Success Message */}
               {submitStatus === 'success' && (
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -236,8 +212,7 @@ export default function ContactPage() {
                   </div>
                 </div>
               )}
-
-              {/* Error Message */}
+              {}
               {submitStatus === 'error' && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center">
@@ -253,7 +228,6 @@ export default function ContactPage() {
                   </div>
                 </div>
               )}
-
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -272,7 +246,6 @@ export default function ContactPage() {
                     maxLength={100}
                   />
                 </div>
-
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Email *
@@ -290,7 +263,6 @@ export default function ContactPage() {
                     maxLength={255}
                   />
                 </div>
-
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
                     Message *
@@ -312,7 +284,6 @@ export default function ContactPage() {
                     {formData.message.length}/2000 characters
                   </div>
                 </div>
-
                 <button
                   type="submit"
                   disabled={isSubmitting || !formData.name.trim() || !formData.email.trim() || !formData.message.trim()}
@@ -330,7 +301,6 @@ export default function ContactPage() {
                     </>
                   )}
                 </button>
-
                 <p className="text-xs text-gray-500 text-center">
                   By submitting this form, you agree to receive a response via email.
                   {connectionStatus === 'fallback' && (

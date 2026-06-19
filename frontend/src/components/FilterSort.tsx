@@ -8,7 +8,6 @@ import {
   SelectValue
 } from './ui/select';
 import { Button } from './ui/button';
-
 interface FilterSortProps {
   selectedTags: string[];
   onTagToggle: (tag: string) => void;
@@ -17,7 +16,6 @@ interface FilterSortProps {
   availableTags: string[];
   onClearFilters: () => void;
 }
-
 const FilterSort: React.FC<FilterSortProps> = ({
   selectedTags,
   onTagToggle,
@@ -45,7 +43,6 @@ const FilterSort: React.FC<FilterSortProps> = ({
             </SelectContent>
           </Select>
         </div>
-
         <div className="flex-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Filter by tags
@@ -66,7 +63,6 @@ const FilterSort: React.FC<FilterSortProps> = ({
             ))}
           </div>
         </div>
-
         <div className="flex items-end">
           <Button
             variant="outline"
@@ -77,7 +73,6 @@ const FilterSort: React.FC<FilterSortProps> = ({
           </Button>
         </div>
       </div>
-
       {selectedTags.length > 0 && (
         <div className="mt-4 pt-4 border-t">
           <div className="flex items-center gap-2 flex-wrap">
@@ -102,6 +97,4 @@ const FilterSort: React.FC<FilterSortProps> = ({
     </div>
   );
 };
-
 export default FilterSort;
-

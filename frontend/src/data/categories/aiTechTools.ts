@@ -1,5 +1,4 @@
 import { Category } from '../resources';
-
 export const aiTechTools: Category = {
     "id": "aiTechTools",
     "title": "AI & Tech Tools",
@@ -69,7 +68,6 @@ export const aiTechTools: Category = {
         "requirements": ["Web browser", "Internet connection", "OpenAI account"],
         "alternatives": ["Claude", "Gemini", "Copilot", "Perplexity"]
       },
-      
       {
         "id": "blackboxai",
         "name": "Blackbox AI",
@@ -1288,7 +1286,6 @@ export const aiTechTools: Category = {
         "requirements": ["Discord account"],
         "alternatives": ["DALL-E 3", "Stable Diffusion 3", "Adobe Firefly"]
       }
-  
     ,{
       "id": "antigravity",
       "name": "Antigravity",

@@ -1,8 +1,6 @@
 "use client";
-
 import React, { useState, useMemo } from 'react';
 import { categories } from '@/data/resources';
-
 import PageHeader from '@/components/layout/PageHeader';
 import ContentContainer from '@/components/layout/ContentContainer';
 import SearchInput from '@/components/ui/SearchInput';
@@ -11,36 +9,27 @@ import ResourceCard from '@/components/cards/ResourceCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 import { filterBySearchTerm, sortItems } from '@/utils/search';
-
 export default function ResourcesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [activeTab, setActiveTab] = useState('categories');
-
-  // Process categories for category view
   const processedCategories = useMemo(() => {
     const filtered = filterBySearchTerm(categories, searchTerm);
     return sortItems(filtered, sortBy);
   }, [searchTerm, sortBy]);
-
-  // Process resources for resource view
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) {
       return [];
     }
-
     const term = searchTerm.toLowerCase();
     const results: Array<{ resource: any; categoryId: string; categoryTitle: string }> = [];
-
     categories.forEach(category => {
       category.resources.forEach(resource => {
         const matchesName = resource.name.toLowerCase().includes(term);
         const matchesDescription = resource.description.toLowerCase().includes(term);
         const matchesTags = resource.tags.some((tag: string) => tag.toLowerCase().includes(term));
         const matchesCategory = category.title.toLowerCase().includes(term);
-
         if (matchesName || matchesDescription || matchesTags || matchesCategory) {
           results.push({
             resource,
@@ -50,8 +39,6 @@ export default function ResourcesPage() {
         }
       });
     });
-
-    // Sort results
     return results.sort((a, b) => {
       switch (sortBy) {
         case 'name':
@@ -67,12 +54,8 @@ export default function ResourcesPage() {
       }
     });
   }, [searchTerm, sortBy]);
-
-  // Determine which view to show
   const showResourceResults = searchTerm.trim() && searchResults.length > 0;
   const showNoResults = searchTerm.trim() && searchResults.length === 0 && processedCategories.length === 0;
-
-  // Auto-switch to resources tab when search has results
   React.useEffect(() => {
     if (showResourceResults && activeTab === 'categories') {
       setActiveTab('resources');
@@ -80,7 +63,6 @@ export default function ResourcesPage() {
       setActiveTab('categories');
     }
   }, [showResourceResults, searchTerm, activeTab]);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader
@@ -88,14 +70,12 @@ export default function ResourcesPage() {
         subtitle="Explore our curated collection of resources organized by category to help you find exactly what you need."
         gradient="from-purple-600 to-pink-600"
       />
-
       <ContentContainer>
         <SearchInput
           value={searchTerm}
           onChange={setSearchTerm}
           placeholder="Search categories and resources..."
         />
-
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-8">
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="flex items-center gap-4">
@@ -131,8 +111,7 @@ export default function ResourcesPage() {
             </div>
           </div>
         </div>
-
-        {/* Search Results Tabs */}
+        {}
         {searchTerm.trim() && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="grid w-full grid-cols-2 max-w-md">
@@ -155,7 +134,6 @@ export default function ResourcesPage() {
             </TabsList>
           </Tabs>
         )}
-
         {showNoResults ? (
           <div className="text-center py-12">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -173,7 +151,7 @@ export default function ResourcesPage() {
           </div>
         ) : (
           <>
-            {/* Categories View */}
+            {}
             {(!searchTerm.trim() || activeTab === 'categories') && processedCategories.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {processedCategories.map((category: any, index: number) => (
@@ -185,11 +163,10 @@ export default function ResourcesPage() {
                 ))}
               </div>
             )}
-
-            {/* Resources View */}
+            {}
             {searchTerm.trim() && activeTab === 'resources' && searchResults.length > 0 && (
               <div className="space-y-8">
-                {/* Group by category */}
+                {}
                 {Object.entries(
                   searchResults.reduce((acc, { resource, categoryId, categoryTitle }) => {
                     if (!acc[categoryId]) {
@@ -228,5 +205,3 @@ export default function ResourcesPage() {
     </div>
   );
 };
-
-

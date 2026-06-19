@@ -2,7 +2,6 @@
 import React from 'react';
 import { categories } from '../../data/resources';
 import CategoryPreviewCard from '../cards/CategoryPreviewCard';
-
 const ResourcesGrid: React.FC = () => {
   return (
     <section id="resources-section" className="py-20 bg-white">
@@ -28,6 +27,4 @@ const ResourcesGrid: React.FC = () => {
     </section>
   );
 };
-
 export default ResourcesGrid;
-

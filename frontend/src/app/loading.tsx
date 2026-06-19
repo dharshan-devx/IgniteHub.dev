@@ -1,10 +1,4 @@
-/**
- * Root loading UI for the Next.js App Router.
- *
- * This file is automatically picked up by Next.js and displayed as a
- * Suspense fallback while page segments are streaming in from the server.
- * It prevents blank-screen flashes during navigation.
- */
+
 export default function Loading() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">

@@ -1,28 +1,24 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
-
 interface LogoProps {
   showText?: boolean;
   size?: 'small' | 'medium' | 'large';
 }
-
 const Logo: React.FC<LogoProps> = ({ showText = true, size = 'medium' }) => {
   const sizeClasses = {
     small: 'w-9 h-9',
     medium: 'w-12 h-12',
     large: 'w-16 h-16'
   };
-
   const textSizeClasses = {
     small: 'text-lg',
     medium: 'text-2xl',
     large: 'text-4xl'
   };
-
   return (
     <Link href="/" className="flex items-center space-x-3">
-      {/* Logo icon */}
+      {}
       <div
         className={`
           ${sizeClasses[size]} 
@@ -32,8 +28,7 @@ const Logo: React.FC<LogoProps> = ({ showText = true, size = 'medium' }) => {
       >
         <span className="text-white font-bold text-xl">🚀</span>
       </div>
-
-      {/* Logo text */}
+      {}
       {showText && (
         <span
           className={`
@@ -49,6 +44,4 @@ const Logo: React.FC<LogoProps> = ({ showText = true, size = 'medium' }) => {
     </Link>
   );
 };
-
 export default Logo;
-

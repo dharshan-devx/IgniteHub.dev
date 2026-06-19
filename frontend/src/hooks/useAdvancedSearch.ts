@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import Fuse from 'fuse.js';
 import { Resource } from '../data/resources';
-
 interface AdvancedSearchFilters {
   tags: string[];
   dateRange: { start: string; end: string };
@@ -11,7 +10,6 @@ interface AdvancedSearchFilters {
   type: string;
   isFree: string;
 }
-
 export const useAdvancedSearch = (resources: Resource[]) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<AdvancedSearchFilters>({
@@ -24,10 +22,8 @@ export const useAdvancedSearch = (resources: Resource[]) => {
     isFree: 'all'
   });
   const [sortBy, setSortBy] = useState('name');
-
   const fuse = useMemo(() => {
     if (!resources?.length) return null;
-
     return new Fuse(resources, {
       keys: [
         { name: 'name', weight: 0.4 },
@@ -38,21 +34,14 @@ export const useAdvancedSearch = (resources: Resource[]) => {
       includeScore: true
     });
   }, [resources]);
-
   const filteredResources = useMemo(() => {
     if (!resources?.length) return [];
-
     let results = resources;
-
-    // Text search
     if (searchTerm.trim() && fuse) {
       const fuseResults = fuse.search(searchTerm);
       results = fuseResults.map(result => result.item);
     }
-
-    // Apply filters
     results = results.filter(resource => {
-      // Tags filter
       if (filters.tags.length > 0) {
         const hasMatchingTag = filters.tags.some(tag => 
           resource.tags.some(resourceTag => 
@@ -61,19 +50,14 @@ export const useAdvancedSearch = (resources: Resource[]) => {
         );
         if (!hasMatchingTag) return false;
       }
-
-      // Free/Paid filter
       if (filters.isFree !== 'all') {
         const isFree = filters.isFree === 'free';
         if (resource.isFree !== isFree) {
           return false;
         }
       }
-
       return true;
     });
-
-    // Sort results
     results.sort((a, b) => {
       switch (sortBy) {
         case 'name':
@@ -96,14 +80,11 @@ export const useAdvancedSearch = (resources: Resource[]) => {
           return 0;
       }
     });
-
     return results;
   }, [resources, searchTerm, filters, sortBy, fuse]);
-
   const updateFilter = (key: keyof AdvancedSearchFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
-
   const clearAllFilters = () => {
     setSearchTerm('');
     setFilters({
@@ -117,12 +98,10 @@ export const useAdvancedSearch = (resources: Resource[]) => {
     });
     setSortBy('name');
   };
-
   const availableTags = useMemo(() => {
     const allTags = resources.flatMap(resource => resource.tags);
     return [...new Set(allTags)].sort();
   }, [resources]);
-
   return {
     searchTerm,
     setSearchTerm,

@@ -1,15 +1,12 @@
 "use client";
-
 import React from 'react';
 import { Search } from 'lucide-react';
-
 interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
 }
-
 const SearchInput: React.FC<SearchInputProps> = ({ 
   value, 
   onChange, 
@@ -31,6 +28,4 @@ const SearchInput: React.FC<SearchInputProps> = ({
     </div>
   );
 };
-
 export default SearchInput;
-

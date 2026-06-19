@@ -7,21 +7,21 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 
-# Import Base and all models so Alembic can detect them
+                                                       
 from app.database import Base
-from app.models import contact  # noqa: F401
+from app.models import contact              
 
-# Alembic Config object
+                       
 config = context.config
 
-# Configure Python logging from alembic.ini
+                                           
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Target metadata for autogenerate
+                                  
 target_metadata = Base.metadata
 
-# Read DATABASE_URL from environment
+                                    
 def get_url() -> str:
     url = os.getenv("DATABASE_URL", "")
     if url.startswith("postgresql://"):

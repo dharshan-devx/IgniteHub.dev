@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState } from 'react';
 import { Zap, Loader2, Sparkles, Code, Users, Clock, Target, Lightbulb, Wrench, Star, ArrowRight, RotateCcw, AlertCircle, CheckCircle, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
@@ -11,9 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { ideaForgeApi, ApiError, type ProjectIdea, type IdeaForgeInput } from '@/lib/api';
-
-// ─── Page-local types (not shared with API layer) ─────────────────────────────
-
 interface ForgeInputs {
   theme: string;
   designStyle: string;
@@ -23,14 +19,12 @@ interface ForgeInputs {
   intent: string;
   specialRequests: string;
 }
-
 interface AiTool {
   name: string;
   description: string;
   url: string;
   category: string;
 }
-
 interface ProjectStep {
   id: number;
   title: string;
@@ -39,7 +33,6 @@ interface ProjectStep {
   tips: string[];
   estimatedTime?: string;
 }
-
 export default function IdeaForgePage() {
   const [inputs, setInputs] = useState<ForgeInputs>({
     theme: '',
@@ -50,7 +43,6 @@ export default function IdeaForgePage() {
     intent: '',
     specialRequests: ''
   });
-  
   const [generatedIdea, setGeneratedIdea] = useState<ProjectIdea | null>(null);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<ProjectIdea[]>([]);
@@ -62,7 +54,6 @@ export default function IdeaForgePage() {
     retryAfter: number;
     countdown: number;
   } | null>(null);
-
   const [userGeminiKey, setUserGeminiKey] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('user_gemini_api_key') || '';
@@ -70,25 +61,21 @@ export default function IdeaForgePage() {
     return '';
   });
   const [showKeyInput, setShowKeyInput] = useState(false);
-
   const handleSaveKey = (key: string) => {
     setUserGeminiKey(key);
     if (typeof window !== 'undefined') {
       localStorage.setItem('user_gemini_api_key', key);
     }
   };
-
   const themes = [
     'AI & Machine Learning', 'EdTech', 'Gaming', 'Environment & Sustainability', 
     'Developer Tools', 'Web3 & Blockchain', 'Cybersecurity', 'FinTech', 
     'HealthTech', 'Social Impact', 'E-commerce', 'Productivity', 'Other'
   ];
-
   const designStyles = [
     'Minimalist', 'Gamified', 'Retro/Vintage', 'Cyberpunk', 'Clean & Modern', 
     'Dark Mode', 'Glassmorphism', 'Neumorphism', 'Material Design', 'Other'
   ];
-
   const techOptions = [
     'React', 'Vue.js', 'Angular', 'Node.js', 'Express', 'Next.js', 'Nuxt.js',
     'Python', 'Django', 'Flask', 'FastAPI', 'JavaScript', 'TypeScript',
@@ -97,10 +84,8 @@ export default function IdeaForgePage() {
     'AWS', 'Vercel', 'Netlify', 'Docker', 'TensorFlow', 'PyTorch',
     'Three.js', 'D3.js', 'Chart.js', 'Tailwind CSS', 'Bootstrap'
   ];
-
   const teamSizes = ['Solo', 'Duo', 'Trio', 'Squad (4)', 'Full Stack (5+)'];
   const buildTimes = ['2 hours', '4 hours', '8 hours', '12 hours', '24 hours', '48 hours', '1 week'];
-
   const projectSteps: ProjectStep[] = [
     {
       id: 1,
@@ -495,7 +480,6 @@ export default function IdeaForgePage() {
       ]
     }
   ];
-
   const handleTechStackToggle = (tech: string) => {
     setInputs(prev => ({
       ...prev,
@@ -504,16 +488,13 @@ export default function IdeaForgePage() {
         : [...prev.techStack, tech]
     }));
   };
-
-  // Rate limit countdown effect
   React.useEffect(() => {
     let interval: NodeJS.Timeout;
-    
     if (rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0) {
       interval = setInterval(() => {
         setRateLimitInfo(prev => {
           if (!prev || prev.countdown <= 1) {
-            return null; // Clear rate limit info when countdown reaches 0
+            return null; 
           }
           return {
             ...prev,
@@ -522,38 +503,29 @@ export default function IdeaForgePage() {
         });
       }, 1000);
     }
-
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [rateLimitInfo]);
-
   const parseRetryAfter = (errorMessage: string): number => {
-    // Try multiple patterns to extract retry time
     const patterns = [
       /try again in (\d+)s/i,
       /please try again in (\d+) seconds/i,
       /retry after (\d+) seconds/i,
       /wait (\d+) seconds/i
     ];
-    
     for (const pattern of patterns) {
       const match = errorMessage.match(pattern);
       if (match) {
         return parseInt(match[1]);
       }
     }
-    
-    // Default to 30 seconds if no specific time found
     return 30;
   };
-
   const isRateLimitError = (error: any): boolean => {
-    // Check various indicators of rate limiting
     if (error?.error?.type === 'requests' || error?.error?.code === 'rate_limit_exceeded') {
       return true;
     }
-    
     const errorMessage = error?.error?.message || error?.message || '';
     const rateLimitIndicators = [
       'rate limit',
@@ -562,27 +534,22 @@ export default function IdeaForgePage() {
       'requests per min',
       'rpm'
     ];
-    
     return rateLimitIndicators.some(indicator => 
       errorMessage.toLowerCase().includes(indicator)
     );
   };
-
   const forgeIdea = async () => {
     if (!inputs.theme || !inputs.designStyle || !inputs.teamSize || !inputs.buildTime) {
       alert('Please fill in all required fields');
       return;
     }
-
     if (rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0) {
       return;
     }
-
     setLoading(true);
     setApiError(null);
     setRateLimitInfo(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
     try {
       const idea = await ideaForgeApi.generate({
         theme: inputs.theme,
@@ -594,7 +561,6 @@ export default function IdeaForgePage() {
         specialRequests: inputs.specialRequests || undefined,
         customApiKey: userGeminiKey || undefined,
       });
-
       setGeneratedIdea(idea);
       setHistory(prev => [idea, ...prev.slice(0, 4)]);
     } catch (err: unknown) {
@@ -609,10 +575,8 @@ export default function IdeaForgePage() {
       setLoading(false);
     }
   };
-
   const handleProceedWithProject = () => {
     setShowProjectSteps(true);
-    // Scroll to project steps section
     setTimeout(() => {
       const stepsElement = document.getElementById('project-steps');
       if (stepsElement) {
@@ -620,7 +584,6 @@ export default function IdeaForgePage() {
       }
     }, 100);
   };
-
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'Easy': return 'text-green-400 bg-green-400/20 border-green-400/30';
@@ -629,11 +592,9 @@ export default function IdeaForgePage() {
       default: return 'text-gray-400 bg-gray-400/20 border-gray-400/30';
     }
   };
-
   const isApiKeyConfigured = () => {
-    return true; // We always have a key configured now (either default or BYOK)
+    return true; 
   };
-
   const formatTime = (seconds: number): string => {
     if (seconds < 60) {
       return `${seconds}s`;
@@ -642,7 +603,6 @@ export default function IdeaForgePage() {
     const remainingSeconds = seconds % 60;
     return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
       <PageHeader
@@ -659,9 +619,8 @@ export default function IdeaForgePage() {
           </div>
         </div>
       </PageHeader>
-
       <ContentContainer className="max-w-6xl">
-        {/* BYOK Status */}
+        {}
         <div className="mb-8 p-6 bg-gradient-to-r from-blue-900/20 to-cyan-900/20 border border-cyan-500/30 rounded-xl transition-all duration-300">
           <div className="flex items-start space-x-3">
             <Wrench className="text-cyan-400 mt-1 flex-shrink-0" size={24} />
@@ -693,7 +652,6 @@ export default function IdeaForgePage() {
             </div>
           </div>
         </div>
-
         {/* Rate Limit Warning */}
         {rateLimitInfo?.isRateLimited && (
           <div className="mb-8 p-6 bg-gradient-to-r from-orange-900/20 to-red-900/20 border border-orange-500/30 rounded-xl">
@@ -716,8 +674,7 @@ export default function IdeaForgePage() {
             </div>
           </div>
         )}
-
-        {/* API Error Display */}
+        {}
         {apiError && !rateLimitInfo?.isRateLimited && (
           <div className="mb-8 p-6 bg-gradient-to-r from-red-900/20 to-red-800/20 border border-red-500/30 rounded-xl">
             <div className="flex items-start space-x-3">
@@ -732,9 +689,8 @@ export default function IdeaForgePage() {
             </div>
           </div>
         )}
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Input Section */}
+          {}
           <div className="bg-gray-900/50 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 shadow-2xl">
             <div className="flex items-center space-x-3 mb-6">
               <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full flex items-center justify-center">
@@ -742,9 +698,8 @@ export default function IdeaForgePage() {
               </div>
               <h2 className="text-2xl font-bold text-white">Project Forge</h2>
             </div>
-
             <div className="space-y-6">
-              {/* Project Theme */}
+              {}
               <div>
                 <Label className="text-cyan-300 font-medium">Project Theme *</Label>
                 <Select value={inputs.theme} onValueChange={(value) => setInputs(prev => ({ ...prev, theme: value }))}>
@@ -760,8 +715,7 @@ export default function IdeaForgePage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Design Style */}
+              {}
               <div>
                 <Label className="text-cyan-300 font-medium">Design Style *</Label>
                 <Select value={inputs.designStyle} onValueChange={(value) => setInputs(prev => ({ ...prev, designStyle: value }))}>
@@ -777,8 +731,7 @@ export default function IdeaForgePage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Tech Stack */}
+              {}
               <div>
                 <Label className="text-cyan-300 font-medium">Tech Stack</Label>
                 <div className="mt-2 max-h-32 overflow-y-auto bg-gray-800/30 rounded-lg p-3 border border-cyan-500/20">
@@ -800,8 +753,7 @@ export default function IdeaForgePage() {
                   </div>
                 </div>
               </div>
-
-              {/* Team Size & Build Time */}
+              {}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-cyan-300 font-medium">Team Size *</Label>
@@ -818,7 +770,6 @@ export default function IdeaForgePage() {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div>
                   <Label className="text-cyan-300 font-medium">Build Time *</Label>
                   <Select value={inputs.buildTime} onValueChange={(value) => setInputs(prev => ({ ...prev, buildTime: value }))}>
@@ -835,8 +786,7 @@ export default function IdeaForgePage() {
                   </Select>
                 </div>
               </div>
-
-              {/* Intent/Mood */}
+              {}
               <div>
                 <Label className="text-cyan-300 font-medium">Intent/Mood</Label>
                 <Input
@@ -846,8 +796,7 @@ export default function IdeaForgePage() {
                   className="bg-gray-800/60 border-cyan-500/30 text-white placeholder-gray-400"
                 />
               </div>
-
-              {/* Special Requests */}
+              {}
               <div>
                 <Label className="text-cyan-300 font-medium">Special Requests</Label>
                 <Textarea
@@ -858,8 +807,7 @@ export default function IdeaForgePage() {
                   rows={3}
                 />
               </div>
-
-              {/* Forge Button */}
+              {}
               <Button
                 onClick={forgeIdea}
                 disabled={loading || !inputs.theme || !inputs.designStyle || !inputs.teamSize || !inputs.buildTime || (rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0)}
@@ -884,8 +832,7 @@ export default function IdeaForgePage() {
               </Button>
             </div>
           </div>
-
-          {/* Output Section */}
+          {}
           <div className="space-y-6">
             {generatedIdea ? (
               <div className="bg-gray-900/50 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 shadow-2xl">
@@ -909,9 +856,8 @@ export default function IdeaForgePage() {
                     }
                   </Button>
                 </div>
-
                 <div className="space-y-6">
-                  {/* Project Title */}
+                  {}
                   <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-4 border border-purple-500/30">
                     <div className="flex items-center space-x-2 mb-2">
                       <Target className="text-purple-400" size={18} />
@@ -919,8 +865,7 @@ export default function IdeaForgePage() {
                     </div>
                     <h3 className="text-2xl font-bold text-white">{generatedIdea.title}</h3>
                   </div>
-
-                  {/* Brief Description */}
+                  {}
                   <div className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-xl p-4 border border-blue-500/30">
                     <div className="flex items-center space-x-2 mb-2">
                       <Sparkles className="text-blue-400" size={18} />
@@ -928,8 +873,7 @@ export default function IdeaForgePage() {
                     </div>
                     <p className="text-gray-200 leading-relaxed">{generatedIdea.description}</p>
                   </div>
-
-                  {/* Detailed Mission Brief */}
+                  {}
                   <div className="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-xl p-4 border border-indigo-500/30">
                     <div className="flex items-center space-x-2 mb-2">
                       <Code className="text-indigo-400" size={18} />
@@ -937,8 +881,7 @@ export default function IdeaForgePage() {
                     </div>
                     <p className="text-gray-200 leading-relaxed">{generatedIdea.detailedDescription}</p>
                   </div>
-
-                  {/* Target Audience & Market Potential */}
+                  {}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-500/30">
                       <div className="flex items-center space-x-2 mb-2">
@@ -947,7 +890,6 @@ export default function IdeaForgePage() {
                       </div>
                       <p className="text-gray-200 text-sm leading-relaxed">{generatedIdea.targetAudience}</p>
                     </div>
-
                     <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 rounded-xl p-4 border border-yellow-500/30">
                       <div className="flex items-center space-x-2 mb-2">
                         <Target className="text-yellow-400" size={18} />
@@ -956,8 +898,7 @@ export default function IdeaForgePage() {
                       <p className="text-gray-200 text-sm leading-relaxed">{generatedIdea.marketPotential}</p>
                     </div>
                   </div>
-
-                  {/* Stats Grid */}
+                  {}
                   <div className="grid grid-cols-2 gap-4">
                     <div className={`rounded-xl p-4 border ${getDifficultyColor(generatedIdea.difficulty)}`}>
                       <div className="flex items-center space-x-2 mb-1">
@@ -966,7 +907,6 @@ export default function IdeaForgePage() {
                       </div>
                       <p className="text-lg font-bold">{generatedIdea.difficulty}</p>
                     </div>
-
                     <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-500/30">
                       <div className="flex items-center space-x-2 mb-1 text-green-400">
                         <Clock size={16} />
@@ -975,8 +915,7 @@ export default function IdeaForgePage() {
                       <p className="text-lg font-bold text-white">{generatedIdea.estimated_time}</p>
                     </div>
                   </div>
-
-                  {/* Innovation Score */}
+                  {}
                   <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 rounded-xl p-4 border border-yellow-500/30">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
@@ -992,8 +931,7 @@ export default function IdeaForgePage() {
                       ></div>
                     </div>
                   </div>
-
-                  {/* Features */}
+                  {}
                   <div className="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-xl p-4 border border-indigo-500/30">
                     <div className="flex items-center space-x-2 mb-3">
                       <Code className="text-indigo-400" size={18} />
@@ -1008,8 +946,7 @@ export default function IdeaForgePage() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Key Benefits */}
+                  {}
                   <div className="bg-gradient-to-r from-emerald-900/30 to-teal-900/30 rounded-xl p-4 border border-emerald-500/30">
                     <div className="flex items-center space-x-2 mb-3">
                       <CheckCircle className="text-emerald-400" size={18} />
@@ -1024,8 +961,7 @@ export default function IdeaForgePage() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Suggested Stack */}
+                  {}
                   <div className="bg-gradient-to-r from-teal-900/30 to-cyan-900/30 rounded-xl p-4 border border-teal-500/30">
                     <div className="flex items-center space-x-2 mb-3">
                       <Wrench className="text-teal-400" size={18} />
@@ -1039,8 +975,7 @@ export default function IdeaForgePage() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Implementation Steps */}
+                  {}
                   <div className="bg-gradient-to-r from-violet-900/30 to-purple-900/30 rounded-xl p-4 border border-violet-500/30">
                     <div className="flex items-center space-x-2 mb-3">
                       <ArrowRight className="text-violet-400" size={18} />
@@ -1057,8 +992,7 @@ export default function IdeaForgePage() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Action Button */}
+                  {}
                   <div className="pt-4">
                     <Button 
                       onClick={handleProceedWithProject}
@@ -1079,8 +1013,7 @@ export default function IdeaForgePage() {
                 <p className="text-gray-400">Fill in your preferences and hit the forge button to generate your custom project idea!</p>
               </div>
             )}
-
-            {/* History Panel */}
+            {}
             {history.length > 0 && (
               <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-500/30 rounded-2xl p-6">
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
@@ -1103,8 +1036,7 @@ export default function IdeaForgePage() {
             )}
           </div>
         </div>
-
-        {/* Project Steps Guide */}
+        {}
         {showProjectSteps && generatedIdea && (
           <div id="project-steps" className="mt-16">
             <div className="text-center mb-12">
@@ -1115,7 +1047,6 @@ export default function IdeaForgePage() {
                 Follow this comprehensive guide to build <span className="text-cyan-400 font-semibold">{generatedIdea.title}</span> from start to finish, with AI tools to help you at every step.
               </p>
             </div>
-
             <div className="space-y-6">
               {projectSteps.map((step, index) => (
                 <div key={step.id} className="bg-gray-900/50 backdrop-blur-sm border border-cyan-500/30 rounded-2xl overflow-hidden">
@@ -1147,11 +1078,10 @@ export default function IdeaForgePage() {
                       </div>
                     </div>
                   </div>
-
                   {expandedStep === step.id && (
                     <div className="border-t border-cyan-500/30 p-6 bg-gray-800/20">
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* AI Tools */}
+                        {}
                         <div>
                           <h4 className="text-lg font-semibold text-cyan-300 mb-4 flex items-center">
                             <Zap className="mr-2" size={18} />
@@ -1181,8 +1111,7 @@ export default function IdeaForgePage() {
                             ))}
                           </div>
                         </div>
-
-                        {/* Tips */}
+                        {}
                         <div>
                           <h4 className="text-lg font-semibold text-green-300 mb-4 flex items-center">
                             <CheckCircle className="mr-2" size={18} />
@@ -1203,7 +1132,6 @@ export default function IdeaForgePage() {
                 </div>
               ))}
             </div>
-
             <div className="mt-12 text-center">
               <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-2xl p-8 border border-purple-500/30">
                 <h3 className="text-2xl font-bold text-white mb-4">🎉 Ready to Start Building?</h3>

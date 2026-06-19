@@ -28,7 +28,7 @@ def setup_logger() -> None:
     Called once at application startup in ``lifespan``.
     """
     root_logger = logging.getLogger()
-    # Remove any handlers added by libraries before our app runs
+                                                                
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
 

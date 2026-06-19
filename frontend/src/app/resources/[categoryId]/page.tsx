@@ -1,5 +1,4 @@
 "use client";
-
 import React, { use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Users, Filter } from 'lucide-react';
@@ -8,15 +7,12 @@ import ResourceCard from '@/components/cards/ResourceCard';
 import AdvancedSearch from '@/components/AdvancedSearch';
 import ContentContainer from '@/components/layout/ContentContainer';
 import { useAdvancedSearch } from '@/hooks/useAdvancedSearch';
-
 interface PageProps {
   params: Promise<{ categoryId: string }>;
 }
-
 export default function ResourceCategoryPage({ params }: PageProps) {
   const { categoryId } = use(params);
   const category = categories.find(cat => cat.id === categoryId);
-  
   const {
     searchTerm,
     setSearchTerm,
@@ -28,7 +24,6 @@ export default function ResourceCategoryPage({ params }: PageProps) {
     clearAllFilters,
     availableTags
   } = useAdvancedSearch(category?.resources || []);
-
   if (!category) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -48,7 +43,6 @@ export default function ResourceCategoryPage({ params }: PageProps) {
       </div>
     );
   }
-
   const showNoResults = filteredResources.length === 0;
   const hasActiveFilters = searchTerm || 
     filters.tags.length > 0 ||
@@ -59,7 +53,6 @@ export default function ResourceCategoryPage({ params }: PageProps) {
     filters.difficulty !== 'all' ||
     filters.type !== 'all' ||
     filters.isFree !== 'all';
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className={`bg-gradient-to-r ${category.gradient} py-16`}>
@@ -71,7 +64,6 @@ export default function ResourceCategoryPage({ params }: PageProps) {
             <ArrowLeft className="mr-2" size={16} />
             Back to Resources
           </Link>
-
           <div className="flex items-center space-x-4 mb-6">
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
               <span className="text-4xl">{category.icon}</span>
@@ -91,13 +83,11 @@ export default function ResourceCategoryPage({ params }: PageProps) {
               </div>
             </div>
           </div>
-
           <p className="text-xl text-white/90 max-w-3xl">
             {category.description}
           </p>
         </div>
       </div>
-
       <ContentContainer>
         <AdvancedSearch
           searchTerm={searchTerm}
@@ -110,7 +100,6 @@ export default function ResourceCategoryPage({ params }: PageProps) {
           availableTags={availableTags}
           placeholder={`Search ${category.title.toLowerCase()}...`}
         />
-
         {showNoResults ? (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">

@@ -2,7 +2,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-
 interface Category {
   id: string;
   title: string;
@@ -11,12 +10,10 @@ interface Category {
   gradient: string;
   resources: any[];
 }
-
 interface CategoryPreviewCardProps {
   category: Category;
   animationDelay?: number;
 }
-
 const CategoryPreviewCard: React.FC<CategoryPreviewCardProps> = ({ category, animationDelay = 0 }) => {
   return (
     <Link
@@ -44,6 +41,4 @@ const CategoryPreviewCard: React.FC<CategoryPreviewCardProps> = ({ category, ani
     </Link>
   );
 };
-
 export default CategoryPreviewCard;
-

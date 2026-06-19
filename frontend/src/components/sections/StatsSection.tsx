@@ -1,10 +1,8 @@
 "use client";
-
 import React from 'react';
 import { categories } from '../../data/resources';
 import { Users, BookOpen, Globe, Zap } from 'lucide-react';
 import { useCountUp } from '../../hooks/useCountUp';
-
 interface StatItemProps {
   icon: React.ReactNode;
   value: number;
@@ -12,14 +10,12 @@ interface StatItemProps {
   description: string;
   delay?: number;
 }
-
 const StatItem: React.FC<StatItemProps> = ({ icon, value, label, description, delay = 0 }) => {
   const { count, elementRef } = useCountUp({
     end: value,
     duration: 2500,
     delay
   });
-
   return (
     <div
       ref={elementRef}
@@ -40,7 +36,6 @@ const StatItem: React.FC<StatItemProps> = ({ icon, value, label, description, de
     </div>
   );
 };
-
 const StatsSection: React.FC = () => {
   const totalResources = categories.reduce((total, category) => total + category.resources.length, 0);
   const freeResources = categories.reduce((total, category) => 
@@ -50,7 +45,6 @@ const StatsSection: React.FC = () => {
   const featuredResources = categories.reduce((total, category) => 
     total + category.resources.filter(resource => resource.featured).length, 0
   );
-
   const stats = [
     {
       icon: <BookOpen className="text-purple-600" size={32} />,
@@ -81,7 +75,6 @@ const StatsSection: React.FC = () => {
       delay: 600
     }
   ];
-
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -93,7 +86,6 @@ const StatsSection: React.FC = () => {
             Our growing collection of resources helps thousands of young innovators turn their ideas into reality
           </p>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {stats.map((stat, index) => (
             <StatItem
@@ -110,5 +102,4 @@ const StatsSection: React.FC = () => {
     </section>
   );
 };
-
 export default StatsSection;

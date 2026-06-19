@@ -1,5 +1,4 @@
 "use client";
-
 import React, { use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink, Tag, Clock, Users, Globe, DollarSign, Zap, CheckCircle, AlertCircle } from 'lucide-react';
@@ -10,18 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-
 interface PageProps {
   params: Promise<{ resourceId: string }>;
 }
-
 export default function ResourceDetailPage({ params }: PageProps) {
   const { resourceId } = use(params);
-  
-  // Find the resource across all categories
   let resource = null;
   let categoryId = '';
-  
   for (const category of categories) {
     const found = category.resources.find(r => r.id === resourceId);
     if (found) {
@@ -30,7 +24,6 @@ export default function ResourceDetailPage({ params }: PageProps) {
       break;
     }
   }
-
   if (!resource) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -49,9 +42,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
       </div>
     );
   }
-
   const category = categories.find(cat => cat.id === categoryId);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader
@@ -67,12 +58,11 @@ export default function ResourceDetailPage({ params }: PageProps) {
           Back to {category?.title}
         </Link>
       </PageHeader>
-
       <ContentContainer>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
+          {}
           <div className="lg:col-span-2 space-y-8">
-            {/* Resource Overview */}
+            {}
             <Card>
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -80,8 +70,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
                     <CardTitle className="text-3xl font-bold text-gray-900 mb-4">
                       {resource.name}
                     </CardTitle>
-
-                    {/* Badges */}
+                    {}
                     <div className="flex flex-wrap gap-3 mb-6">
                       {resource.featured && (
                         <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white">
@@ -107,13 +96,11 @@ export default function ResourceDetailPage({ params }: PageProps) {
                   </div>
                 </div>
               </CardHeader>
-
               <CardContent>
                 <p className="text-lg text-gray-700 leading-relaxed mb-6">
                   {resource.detailedDescription || resource.description}
                 </p>
-
-                {/* Action Buttons */}
+                {}
                 <div className="flex items-center space-x-4 mb-6">
                   <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
                     <a href={resource.url} target="_blank" rel="noopener noreferrer">
@@ -122,8 +109,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
                     </a>
                   </Button>
                 </div>
-
-                {/* Tags */}
+                {}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Topics & Tags</h3>
                   <div className="flex flex-wrap gap-2">
@@ -140,8 +126,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Features */}
+            {}
             {resource.features && resource.features.length > 0 && (
               <Card>
                 <CardHeader>
@@ -162,8 +147,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
                 </CardContent>
               </Card>
             )}
-
-            {/* Pricing */}
+            {}
             {resource.pricing && (
               <Card>
                 <CardHeader>
@@ -180,7 +164,6 @@ export default function ResourceDetailPage({ params }: PageProps) {
                         <p className="text-green-700">{resource.pricing.free}</p>
                       </div>
                     )}
-                    
                     {resource.pricing.paid && resource.pricing.paid.length > 0 && (
                       <div className="space-y-3">
                         <h4 className="font-semibold text-gray-900">Paid Plans</h4>
@@ -195,8 +178,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
                 </CardContent>
               </Card>
             )}
-
-            {/* Requirements */}
+            {}
             {resource.requirements && resource.requirements.length > 0 && (
               <Card>
                 <CardHeader>
@@ -217,8 +199,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
                 </CardContent>
               </Card>
             )}
-
-            {/* Alternatives */}
+            {}
             {resource.alternatives && resource.alternatives.length > 0 && (
               <Card>
                 <CardHeader>
@@ -236,35 +217,30 @@ export default function ResourceDetailPage({ params }: PageProps) {
               </Card>
             )}
           </div>
-
-          {/* Sidebar */}
+          {}
           <div className="space-y-6">
-            {/* Quick Info */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle>Quick Info</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                
                 <div className="flex items-center text-sm text-gray-600">
                   <Tag size={16} className="mr-2" />
                   {category?.title}
                 </div>
-
                 {resource.location && (
                   <div className="flex items-center text-sm text-gray-600">
                     <Globe size={16} className="mr-2" />
                     {resource.location}
                   </div>
                 )}
-
                 {resource.difficulty && (
                   <div className="flex items-center text-sm text-gray-600">
                     <Users size={16} className="mr-2" />
                     {resource.difficulty} level
                   </div>
                 )}
-
                 {resource.type && (
                   <div className="flex items-center text-sm text-gray-600">
                     <Clock size={16} className="mr-2" />
@@ -273,8 +249,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
                 )}
               </CardContent>
             </Card>
-
-            {/* Related Resources */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle>Related Resources</CardTitle>
@@ -299,9 +274,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
                       </Link>
                     ))}
                 </div>
-                
                 <Separator className="my-4" />
-                
                 <Link
                   href={`/resources/${categoryId}`}
                   className="block text-center text-purple-600 hover:text-purple-700 font-medium"
@@ -310,8 +283,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
                 </Link>
               </CardContent>
             </Card>
-
-            {/* Quick Actions */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>

@@ -1,7 +1,5 @@
 "use client";
-
 import { useState, useEffect, useRef } from 'react';
-
 interface UseCountUpOptions {
   end: number;
   duration?: number;
@@ -9,7 +7,6 @@ interface UseCountUpOptions {
   decimals?: number;
   delay?: number;
 }
-
 export const useCountUp = ({
   end,
   duration = 2000,
@@ -21,7 +18,6 @@ export const useCountUp = ({
   const [isVisible, setIsVisible] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
   const elementRef = useRef<any>(null);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -32,43 +28,31 @@ export const useCountUp = ({
       },
       { threshold: 0.3 }
     );
-
     if (elementRef.current) {
       observer.observe(elementRef.current);
     }
-
     return () => observer.disconnect();
   }, [hasAnimated]);
-
   useEffect(() => {
     if (!isVisible) return;
-
     const timer = setTimeout(() => {
       const startTime = Date.now();
       const startValue = start;
       const endValue = end;
       const totalChange = endValue - startValue;
-
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing function for smooth animation
         const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-        
         const currentValue = startValue + (totalChange * easeOutQuart);
         setCount(Number(currentValue.toFixed(decimals)));
-
         if (progress < 1) {
           requestAnimationFrame(animate);
         }
       };
-
       requestAnimationFrame(animate);
     }, delay);
-
     return () => clearTimeout(timer);
   }, [isVisible, end, duration, start, decimals, delay]);
-
   return { count, elementRef };
 };

@@ -1,5 +1,4 @@
 import { Category } from '../resources';
-
 export const openSourceVolunteer: Category = {
     "id": "openSourceVolunteer",
     "title": "Open Source & Volunteer Projects",

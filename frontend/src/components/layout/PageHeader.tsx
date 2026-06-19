@@ -1,13 +1,11 @@
 "use client";
 import React from 'react';
-
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
   gradient: string;
   children?: React.ReactNode;
 }
-
 const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, gradient, children }) => {
   return (
     <div className={`bg-gradient-to-br ${gradient} py-16`}>
@@ -27,7 +25,4 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, gradient, chil
     </div>
   );
 };
-
 export default PageHeader;
-
-

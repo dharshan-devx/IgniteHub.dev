@@ -27,7 +27,7 @@ class IdeaForgeService:
     offloaded to a thread pool via ``asyncio.to_thread``.
     """
 
-    # ── Prompt ────────────────────────────────────────────────────────────────
+                                                                                
 
     def _build_prompt(self, inputs: IdeaForgeInput) -> str:
         tech_str = ", ".join(inputs.techStack) if inputs.techStack else "Any suitable technologies"
@@ -42,7 +42,7 @@ Intent/Mood: {inputs.intent or 'Professional and impactful'}
 Special Requirements: {inputs.specialRequests or 'None specified'}
 
 Return ONLY a valid JSON object with these exact keys:
-{{
+{ 
   "title": "Creative and catchy project name",
   "description": "Brief 1-2 sentence overview",
   "detailedDescription": "Comprehensive 4-5 sentence description covering purpose, functionality, target users, unique features, and impact",
@@ -55,9 +55,9 @@ Return ONLY a valid JSON object with these exact keys:
   "marketPotential": "Market opportunity analysis",
   "keyBenefits": ["Benefit 1", "Benefit 2", "Benefit 3"],
   "implementationSteps": ["Step 1", "Step 2", "Step 3", "Step 4", "Step 5"]
-}}"""
+} """
 
-    # ── Sync Gemini call (runs in thread pool) ────────────────────────────────
+                                                                                
 
     def _call_gemini_sync(self, api_key: str, prompt: str) -> str:
         """Performs the synchronous Gemini API call.
@@ -77,7 +77,7 @@ Return ONLY a valid JSON object with these exact keys:
         )
         return response.text.strip()
 
-    # ── Public async entry point ──────────────────────────────────────────────
+                                                                                
 
     async def generate_idea(self, inputs: IdeaForgeInput) -> dict:
         """Generates an AI project idea and returns it as a validated dict.
@@ -111,15 +111,15 @@ Return ONLY a valid JSON object with these exact keys:
                 inputs.theme,
                 inputs.techStack,
             )
-            # Offload the synchronous SDK call to a thread pool so the
-            # asyncio event loop is not blocked during the API round-trip.
+                                                                      
+                                                                          
             raw_text: str = await asyncio.to_thread(
                 self._call_gemini_sync, api_key, prompt
             )
             logger.info("Gemini response received — parsing JSON")
 
-            # Defensively strip markdown code fences if the model ignores
-            # the response_mime_type instruction.
+                                                                         
+                                                 
             if raw_text.startswith("```"):
                 raw_text = raw_text.split("\n", 1)[-1]
                 raw_text = raw_text.rsplit("```", 1)[0]

@@ -16,7 +16,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from './ui/collapsible';
-
 interface AdvancedSearchProps {
   searchTerm: string;
   onSearchChange: (term: string) => void;
@@ -36,7 +35,6 @@ interface AdvancedSearchProps {
   availableTags: string[];
   placeholder?: string;
 }
-
 const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   searchTerm,
   onSearchChange,
@@ -49,7 +47,6 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   placeholder = 'Search resources...'
 }) => {
   const [showAdvanced, setShowAdvanced] = React.useState(false);
-
   const hasActiveFilters =
     searchTerm || 
     filters.tags.length > 0 ||
@@ -60,10 +57,9 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     filters.difficulty !== 'all' ||
     filters.type !== 'all' ||
     filters.isFree !== 'all';
-
   return (
     <div className="bg-white rounded-lg shadow-sm border p-6 mb-8 space-y-4">
-      {/* Main Search Bar */}
+      {}
       <div className="flex gap-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -76,7 +72,6 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             placeholder={placeholder}
           />
         </div>
-
         <Select value={sortBy} onValueChange={onSortChange}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Sort by" />
@@ -91,7 +86,6 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             <SelectItem value="popular">Most Popular</SelectItem>
           </SelectContent>
         </Select>
-
         <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
           <CollapsibleTrigger asChild>
             <Button variant="outline" className="flex items-center space-x-2">
@@ -105,7 +99,6 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             </Button>
           </CollapsibleTrigger>
         </Collapsible>
-
         {hasActiveFilters && (
           <Button variant="outline" onClick={onClearAll}>
             <X size={16} className="mr-1" />
@@ -113,8 +106,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
           </Button>
         )}
       </div>
-
-      {/* Advanced Filters */}
+      {}
       <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
         <CollapsibleContent>
           <AdvancedFilters
@@ -128,5 +120,4 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     </div>
   );
 };
-
 export default AdvancedSearch;

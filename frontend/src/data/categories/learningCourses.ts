@@ -1,5 +1,4 @@
 import { Category } from '../resources';
-
 export const learningCourses: Category = {
     "id": "learningCourses",
     "title": "Learning Platforms & Courses",

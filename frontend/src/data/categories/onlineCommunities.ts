@@ -1,5 +1,4 @@
 import { Category } from '../resources';
-
 export const onlineCommunities: Category = {
     "id": "onlineCommunities",
     "title": "Online Communities & Networks",

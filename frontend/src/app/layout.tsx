@@ -7,24 +7,19 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/QueryProvider";
-
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
 export const metadata: Metadata = {
   title: "IgniteHub 🚀 - The Ultimate Resource Hub for Young Innovators",
   description: "A modern, AI-powered platform that transforms how young builders discover tools, learn skills, and bring ideas to life.",
   keywords: ["resources", "innovation", "tools", "community", "hackathons", "funding"],
 };
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,7 +40,6 @@ export default function RootLayout({
           </TooltipProvider>
         </QueryProvider>
       </body>
-
     </html>
   );
 }

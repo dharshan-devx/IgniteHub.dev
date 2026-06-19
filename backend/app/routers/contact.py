@@ -1,8 +1,9 @@
 import logging
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 from app.schemas.contact import ContactCreate, ContactRead
 from app.services.contact import ContactService
 from app.core.dependencies import get_contact_service
+from app.core.limiter import limiter
 from app.database import is_db_configured
 
 router = APIRouter(prefix="/api/v1/contact", tags=["Contact"])
@@ -27,7 +28,9 @@ async def get_db_status() -> dict:
     summary="Submit a contact message",
     response_description="Confirmation with the saved record ID",
 )
+@limiter.limit("3/minute")
 async def submit_contact(
+    request: Request,
     submission: ContactCreate,
     service: ContactService = Depends(get_contact_service),
 ) -> dict:

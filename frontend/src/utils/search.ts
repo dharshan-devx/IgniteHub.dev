@@ -1,10 +1,8 @@
 import { categories } from '../data/resources';
-
 export const filterBySearchTerm = (items: typeof categories, searchTerm: string) => {
   if (!searchTerm.trim()) {
     return items;
   }
-
   const term = searchTerm.toLowerCase();
   return items.filter(item => 
     item.title.toLowerCase().includes(term) ||
@@ -12,10 +10,8 @@ export const filterBySearchTerm = (items: typeof categories, searchTerm: string)
     item.tags?.some((tag: string) => tag.toLowerCase().includes(term))
   );
 };
-
 export const sortItems = (items: typeof categories, sortBy: string) => {
   const sortedItems = [...items];
-
   switch (sortBy) {
     case 'name':
       return sortedItems.sort((a, b) => a.title.localeCompare(b.title));

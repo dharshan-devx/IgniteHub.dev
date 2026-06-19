@@ -3,7 +3,6 @@ import React from 'react';
 import { Rocket, Linkedin, Mail } from 'lucide-react';
 import Link from 'next/link';
 import Logo from './common/Logo';
-
 const Footer: React.FC = () => {
   return (
     <footer className="bg-gradient-to-r from-indigo-900 via-purple-900 to-sky-900 text-gray-100 py-12 mt-20">
@@ -14,7 +13,6 @@ const Footer: React.FC = () => {
             Empowering young innovators with curated resources and opportunities.
           </p>
         </div>
-
         <div>
           <h4 className="text-lg font-semibold mb-4 text-white">Quick Links</h4>
           <nav className="flex flex-col gap-2">
@@ -32,10 +30,8 @@ const Footer: React.FC = () => {
             </Link>
           </nav>
         </div>
-
         <div>
           <h4 className="text-lg font-semibold mb-4 text-white">Connect</h4>
-
           <div className="flex space-x-4 mb-4">
             <a
               href="https://www.linkedin.com/in/dharshansondi/"
@@ -45,7 +41,6 @@ const Footer: React.FC = () => {
             >
               <Linkedin size={20} />
             </a>
-
             <a
               href="mailto:dharshansondi.dev@gmail.com"
               className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
@@ -53,24 +48,19 @@ const Footer: React.FC = () => {
               <Mail size={20} />
             </a>
           </div>
-
           <p className="text-sm text-gray-300 break-all">
             dharshansondi.dev@gmail.com
           </p>
         </div>
       </div>
-
       <div className="border-t border-white/10 mt-8 pt-6 text-center text-sm text-gray-300">
         <div className="flex justify-center items-center gap-2 mb-2">
           <Rocket size={16} className="text-sky-400" />
           Launching dreams into reality
         </div>
-
         © 2025 IgniteHub. Sondi Dharshan. All rights reserved.
       </div>
     </footer>
   );
 };
-
 export default Footer;
-

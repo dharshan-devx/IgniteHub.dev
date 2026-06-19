@@ -2,7 +2,6 @@ export interface Pricing {
   free?: string;
   paid?: string[];
 }
-
 export interface Resource {
   id: string;
   name: string;
@@ -23,7 +22,6 @@ export interface Resource {
   location?: string;
   dateAdded?: string;
 }
-
 export interface Category {
   id: string;
   title: string;
@@ -33,14 +31,12 @@ export interface Category {
   tags?: string[];
   resources: Resource[];
 }
-
 import { aiTechTools } from './categories/aiTechTools';
 import { grantsFunding } from './categories/grantsFunding';
 import { hackathonsEvents } from './categories/hackathonsEvents';
 import { learningCourses } from './categories/learningCourses';
 import { onlineCommunities } from './categories/onlineCommunities';
 import { openSourceVolunteer } from './categories/openSourceVolunteer';
-
 export const categories: Category[] = [
   aiTechTools,
   grantsFunding,

@@ -50,7 +50,7 @@ class IdeaForgeInput(BaseModel):
         strip_whitespace=True,
         description="Any special requirements or constraints",
     )
-    # repr=False prevents the key from appearing in logs or __repr__ output
+                                                                           
     customApiKey: Optional[str] = Field(
         default=None,
         min_length=20,

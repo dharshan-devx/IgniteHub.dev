@@ -4,7 +4,6 @@ import { X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
-
 interface AdvancedFiltersProps {
   filters: {
     tags: string[];
@@ -19,7 +18,6 @@ interface AdvancedFiltersProps {
   onClearFilters: () => void;
   availableTags: string[];
 }
-
 const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   filters,
   onFilterChange,
@@ -32,11 +30,10 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
       : [...filters.tags, tag];
     onFilterChange('tags', newTags);
   };
-
   return (
     <div className="border-t pt-4 space-y-6">
       <div className="grid grid-cols-1 gap-6">
-        {/* Tags Filter */}
+        {}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Tags</Label>
           <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
@@ -55,8 +52,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             ))}
           </div>
         </div>
-
-        {/* Pricing Filter */}
+        {}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Pricing</Label>
           <div className="flex flex-wrap gap-2">
@@ -84,8 +80,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Clear Filters Button */}
+      {}
       <div className="flex justify-end pt-4 border-t">
         <Button variant="outline" onClick={onClearFilters}>
           <X size={16} className="mr-2" />
@@ -95,5 +90,4 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
     </div>
   );
 };
-
 export default AdvancedFilters;

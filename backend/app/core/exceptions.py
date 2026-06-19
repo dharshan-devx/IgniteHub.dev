@@ -33,8 +33,8 @@ def add_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        # Re-raise HTTPException so FastAPI's built-in handler returns the
-        # correct 4xx/5xx response instead of a generic 500.
+                                                                          
+                                                            
         if isinstance(exc, HTTPException):
             raise exc
         logger.error(

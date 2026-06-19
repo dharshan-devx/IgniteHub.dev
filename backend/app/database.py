@@ -11,7 +11,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# Handle URL conversion for asyncpg
+                                   
 raw_url = os.getenv("DATABASE_URL", "")
 if raw_url and raw_url.startswith("postgresql://"):
     ASYNC_DATABASE_URL = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
@@ -19,7 +19,7 @@ else:
     ASYNC_DATABASE_URL = raw_url
 
 connect_args = {}
-# Neon databases require SSL. If it's a neon URL, enable SSL natively for asyncpg.
+                                                                                  
 if "neon.tech" in ASYNC_DATABASE_URL:
     connect_args["ssl"] = True
 
@@ -75,7 +75,7 @@ async def init_db():
     try:
         logger.info("Ensuring database tables are initialized...")
         async with engine.begin() as conn:
-            # Explicitly import models here later if needed to register metadata
+                                                                                
             await conn.run_sync(Base.metadata.create_all)
         return True
     except Exception as e:

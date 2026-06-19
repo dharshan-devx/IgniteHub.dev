@@ -3,17 +3,21 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.core.logger import setup_logger
 from app.core.exceptions import add_exception_handlers
 from app.database import init_db_pool, close_db_pool, init_db, execute_query_raw, is_db_configured
 from app.routers import contact, ideaforge
 
-# Configure structured JSON logging before anything else runs
+                                                             
+from app.core.limiter import limiter
+
 setup_logger()
 logger = logging.getLogger(__name__)
 
-# ─── OpenAPI metadata ─────────────────────────────────────────────────────────
+                                                                                
 
 TAGS_METADATA = [
     {
@@ -38,22 +42,22 @@ TAGS_METADATA = [
     },
 ]
 
-# ─── Lifespan ─────────────────────────────────────────────────────────────────
+                                                                                
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting IgniteHub API...")
     init_db_pool()
-    # Import models here so SQLAlchemy registers them with Base.metadata
-    # before create_all is called.
-    from app.models import contact as _contact_model  # noqa: F401
+                                                                        
+                                  
+    from app.models import contact as _contact_model              
     await init_db()
     yield
     await close_db_pool()
     logger.info("IgniteHub API shutdown complete.")
 
 
-# ─── Application factory ──────────────────────────────────────────────────────
+                                                                                
 
 app = FastAPI(
     title="IgniteHub API",
@@ -72,7 +76,11 @@ app = FastAPI(
 
 add_exception_handlers(app)
 
-# ─── CORS ─────────────────────────────────────────────────────────────────────
+                            
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+                                                                                
 
 _raw_origins = os.getenv("ALLOWED_ORIGINS", "")
 if _raw_origins:
@@ -98,12 +106,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── Routers ──────────────────────────────────────────────────────────────────
+                                                                                
 
 app.include_router(contact.router)
 app.include_router(ideaforge.router)
 
-# ─── Root & Health ────────────────────────────────────────────────────────────
+                                                                                
 
 @app.get("/", tags=["Root"], summary="API info")
 def read_root() -> dict:

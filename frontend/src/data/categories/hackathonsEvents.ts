@@ -1,5 +1,4 @@
 import { Category } from '../resources';
-
 export const hackathonsEvents: Category = {
     "id": "hackathonsEvents",
     "title": "Hackathons & Events",

@@ -1,4 +1,3 @@
-// Local type definitions for the application, formerly housed in supabase.ts
 
 export type ResourceReview = {
   id: string;
@@ -17,7 +16,6 @@ export type ResourceReview = {
   helpful_count?: number;
   unhelpful_count?: number;
 };
-
 export type UserCollection = {
   id: string;
   user_id: string;
@@ -30,7 +28,6 @@ export type UserCollection = {
   created_at: string;
   updated_at: string;
 };
-
 export type CollectionItem = {
   id: string;
   collection_id: string;
