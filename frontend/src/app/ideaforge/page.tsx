@@ -10,22 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ideaForgeApi } from '@/lib/api';
+import { ideaForgeApi, ApiError, type ProjectIdea, type IdeaForgeInput } from '@/lib/api';
 
-interface ProjectIdea {
-  title: string;
-  description: string;
-  detailedDescription: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  estimated_time: string;
-  innovation_score: number;
-  features: string[];
-  suggested_stack: string[];
-  targetAudience: string;
-  marketPotential: string;
-  keyBenefits: string[];
-  implementationSteps: string[];
-}
+// ─── Page-local types (not shared with API layer) ─────────────────────────────
 
 interface ForgeInputs {
   theme: string;
@@ -37,16 +24,18 @@ interface ForgeInputs {
   specialRequests: string;
 }
 
+interface AiTool {
+  name: string;
+  description: string;
+  url: string;
+  category: string;
+}
+
 interface ProjectStep {
   id: number;
   title: string;
   description: string;
-  aiTools: Array<{
-    name: string;
-    description: string;
-    url: string;
-    category: string;
-  }>;
+  aiTools: AiTool[];
   tips: string[];
   estimatedTime?: string;
 }
@@ -516,43 +505,6 @@ export default function IdeaForgePage() {
     }));
   };
 
-  const buildPrompt = (): string => {
-    return `You are an expert project idea generator for young innovators and developers. Generate a comprehensive, innovative project idea based on these specifications:
-
-Theme: ${inputs.theme}
-Design Style: ${inputs.designStyle}
-Tech Stack: ${inputs.techStack.join(', ') || 'Any suitable technologies'}
-Team Size: ${inputs.teamSize}
-Build Time: ${inputs.buildTime}
-Intent/Mood: ${inputs.intent || 'Professional and impactful'}
-Special Requirements: ${inputs.specialRequests || 'None specified'}
-
-Create a detailed project idea that is:
-1. Innovative and unique
-2. Feasible within the given timeframe
-3. Aligned with the specified theme and requirements
-4. Suitable for the team size
-5. Commercially viable or socially impactful
-
-Return ONLY a valid JSON response in this exact format:
-{
-  "title": "Creative and catchy project name",
-  "description": "Brief 1-2 sentence overview of the project",
-  "detailedDescription": "Comprehensive 4-5 sentence description explaining the project's purpose, functionality, target users, unique features, and potential impact",
-  "difficulty": "Easy|Medium|Hard",
-  "estimated_time": "${inputs.buildTime}",
-  "innovation_score": 85,
-  "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5"],
-  "suggested_stack": ["Tech1", "Tech2", "Tech3", "Tech4"],
-  "targetAudience": "Specific description of who would use this project",
-  "marketPotential": "Brief analysis of market opportunity and potential impact",
-  "keyBenefits": ["Benefit 1", "Benefit 2", "Benefit 3"],
-  "implementationSteps": ["Step 1", "Step 2", "Step 3", "Step 4", "Step 5"]
-}
-
-Make it creative, practical, and aligned with current technology trends. Ensure the innovation score reflects genuine uniqueness and market potential (provide a highly realistic and specific score based on current market trends, not just standard rounded numbers).`;
-  };
-
   // Rate limit countdown effect
   React.useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -622,19 +574,16 @@ Make it creative, practical, and aligned with current technology trends. Ensure 
       return;
     }
 
-    // Check if we're currently rate limited
     if (rateLimitInfo?.isRateLimited && rateLimitInfo.countdown > 0) {
-      return; // Don't make request if still rate limited
+      return;
     }
 
     setLoading(true);
     setApiError(null);
     setRateLimitInfo(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
+
     try {
-      console.log('Requesting idea generation via FastAPI backend...');
-      
       const idea = await ideaForgeApi.generate({
         theme: inputs.theme,
         designStyle: inputs.designStyle,
@@ -643,78 +592,22 @@ Make it creative, practical, and aligned with current technology trends. Ensure 
         buildTime: inputs.buildTime,
         intent: inputs.intent || undefined,
         specialRequests: inputs.specialRequests || undefined,
-        customApiKey: userGeminiKey || undefined
-      }) as any;
+        customApiKey: userGeminiKey || undefined,
+      });
 
-      console.log('Generated Idea via Backend:', idea);
       setGeneratedIdea(idea);
       setHistory(prev => [idea, ...prev.slice(0, 4)]);
-      setApiError(null);
-      return;
-      
-    } catch (error: any) {
-      console.error('Error generating idea:', error);
-      
-      if (error.message === 'Rate limit exceeded') {
-        const retryAfter = 30; // Default fallback retry window
-        setRateLimitInfo({
-          isRateLimited: true,
-          retryAfter,
-          countdown: retryAfter
-        });
-        console.log(`Rate limit detected. Try again in 30 seconds.`);
-      } else if (!rateLimitInfo?.isRateLimited) {
-        setApiError(error.message || 'Failed to generate project idea');
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 429) {
+        const retryAfter = parseRetryAfter(err.message);
+        setRateLimitInfo({ isRateLimited: true, retryAfter, countdown: retryAfter });
+      } else {
+        const message = err instanceof Error ? err.message : 'Failed to generate project idea';
+        setApiError(message);
       }
+    } finally {
+      setLoading(false);
     }
-    
-    // Always show fallback idea if we reach this point (either due to error or rate limit)
-    if (!generatedIdea || rateLimitInfo?.isRateLimited) {
-      console.log('Showing fallback idea due to API issues or rate limiting');
-      
-      // Enhanced fallback idea with all required fields
-      const fallbackIdea: ProjectIdea = {
-        title: "EcoTrack - Smart Carbon Footprint Tracker",
-        description: "A gamified web application that helps users track their daily carbon footprint through interactive challenges and provides personalized recommendations for sustainable living.",
-        detailedDescription: "EcoTrack is an innovative web application designed to make environmental consciousness engaging and actionable. Users can log their daily activities such as transportation, energy consumption, and food choices, while the app calculates their carbon footprint in real-time. The platform features a gamification system with badges, leaderboards, and challenges to motivate users towards more sustainable behaviors. Advanced AI algorithms provide personalized recommendations based on user patterns, local climate data, and available eco-friendly alternatives. The app also includes a social component where users can share achievements, participate in community challenges, and connect with like-minded individuals committed to reducing their environmental impact.",
-        difficulty: inputs.buildTime === '2 hours' || inputs.buildTime === '4 hours' ? 'Easy' : 
-                   inputs.buildTime === '8 hours' || inputs.buildTime === '12 hours' ? 'Medium' : 'Hard',
-        estimated_time: inputs.buildTime,
-        innovation_score: 78,
-        features: [
-          "Daily activity logging with smart categorization",
-          "Real-time carbon footprint calculation",
-          "Gamification with badges and achievements",
-          "AI-powered personalized recommendations",
-          "Social sharing and community challenges",
-          "Local environmental data integration",
-          "Progress tracking and analytics dashboard"
-        ],
-        suggested_stack: inputs.techStack.length > 0 ? inputs.techStack.slice(0, 4) : ["React", "Node.js", "MongoDB", "Chart.js"],
-        targetAudience: "Environmentally conscious individuals aged 18-35 who want to reduce their carbon footprint but need guidance and motivation to maintain sustainable habits",
-        marketPotential: "Growing environmental awareness and corporate sustainability initiatives create a strong market opportunity. Potential for B2B partnerships with companies tracking employee sustainability metrics.",
-        keyBenefits: [
-          "Increased environmental awareness and action",
-          "Gamified approach makes sustainability engaging",
-          "Data-driven insights for better decision making",
-          "Community support and motivation"
-        ],
-        implementationSteps: [
-          "Set up project structure and basic UI components",
-          "Implement user authentication and profile management",
-          "Create activity logging system with carbon calculation",
-          "Build gamification features and achievement system",
-          "Integrate social features and community challenges",
-          "Add AI recommendations and analytics dashboard",
-          "Test, optimize, and deploy the application"
-        ]
-      };
-      
-      setGeneratedIdea(fallbackIdea);
-      setHistory(prev => [fallbackIdea, ...prev.slice(0, 4)]);
-    }
-    
-    setLoading(false);
   };
 
   const handleProceedWithProject = () => {

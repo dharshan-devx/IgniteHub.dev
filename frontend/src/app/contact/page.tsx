@@ -85,42 +85,12 @@ export default function ContactPage() {
     return true;
   };
 
-  // Submit to FormSubmit service (as fallback)
-  const submitToFormSubmit = async () => {
-    try {
-      console.log('Submitting via FormSubmit service...');
-      
-      const formSubmitData = new FormData();
-      formSubmitData.append('name', formData.name.trim());
-      formSubmitData.append('email', formData.email.trim());
-      formSubmitData.append('message', formData.message.trim());
-      formSubmitData.append('_subject', 'New message from IgniteHub Contact Form');
-      formSubmitData.append('_captcha', 'false');
-      formSubmitData.append('_template', 'table');
-
-      const response = await fetch('https://formsubmit.co/dharshansondi.dev@gmail.com', {
-        method: 'POST',
-        body: formSubmitData,
-        mode: 'no-cors'
-      });
-
-      console.log('FormSubmit submission completed');
-      return { success: true };
-    } catch (error) {
-      console.error('FormSubmit submission failed:', error);
-      throw new Error('Failed to send message via email service');
-    }
-  };
-
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Reset status
     setSubmitStatus('idle');
     setErrorMessage('');
 
-    // Validate form
     if (!validateForm()) {
       setSubmitStatus('error');
       return;
@@ -129,43 +99,19 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      let submissionResult = null;
-
-      // Try FastAPI backend (Neon DB) first if status was connected
-      if (connectionStatus === 'connected') {
-        try {
-          submissionResult = await contactApi.submit({
-            name: formData.name.trim(),
-            email: formData.email.trim(),
-            message: formData.message.trim()
-          });
-          console.log('Message saved to database via backend API');
-        } catch (neonError: any) {
-          console.warn('Backend database submission failed, falling back to FormSubmit:', neonError.message);
-          // Continue to FormSubmit fallback
-        }
-      }
-
-      // Use FormSubmit if database failed or was not connected
-      if (!submissionResult) {
-        try {
-          submissionResult = await submitToFormSubmit();
-          console.log('Message sent via email service fallback');
-        } catch (formSubmitError: any) {
-          console.error('FormSubmit submission also failed:', formSubmitError);
-          throw new Error('Unable to send message. Please try again later or contact us directly at dharshansondi.dev@gmail.com');
-        }
-      }
-
-      // Success - reset form and show success message
-      if (submissionResult?.success) {
-        setFormData({ name: '', email: '', message: '' });
-        setSubmitStatus('success');
-      }
-      
-    } catch (error: any) {
-      console.error('Error submitting contact form:', error);
-      setErrorMessage(error.message || 'Failed to send message. Please try again or contact us directly.');
+      await contactApi.submit({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        message: formData.message.trim(),
+      });
+      setFormData({ name: '', email: '', message: '' });
+      setSubmitStatus('success');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Unable to send your message. Please try again or email us directly.';
+      setErrorMessage(message);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);

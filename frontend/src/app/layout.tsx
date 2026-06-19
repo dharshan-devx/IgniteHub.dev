@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { QueryProvider } from "@/components/QueryProvider";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,16 +33,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} min-h-full flex flex-col font-sans antialiased`}>
-        <TooltipProvider>
-          <Header />
-          <main className="flex-1 page-transition bg-gray-50">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
+        <QueryProvider>
+          <TooltipProvider>
+            <Header />
+            <main className="flex-1 page-transition bg-gray-50">
+              {children}
+            </main>
+            <Footer />
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
+        </QueryProvider>
       </body>
+
     </html>
   );
 }

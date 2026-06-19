@@ -1,105 +1,105 @@
 import os
 import logging
-from contextlib import contextmanager
-import psycopg2
-from psycopg2.pool import ThreadedConnectionPool
-from psycopg2.extras import RealDictCursor
+from typing import AsyncGenerator
 from dotenv import load_dotenv
+
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
+from sqlalchemy import text
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
 logger = logging.getLogger(__name__)
 
-# Global connection pool instance
-_connection_pool = None
+# Handle URL conversion for asyncpg
+raw_url = os.getenv("DATABASE_URL", "")
+if raw_url and raw_url.startswith("postgresql://"):
+    ASYNC_DATABASE_URL = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+else:
+    ASYNC_DATABASE_URL = raw_url
+
+connect_args = {}
+# Neon databases require SSL. If it's a neon URL, enable SSL natively for asyncpg.
+if "neon.tech" in ASYNC_DATABASE_URL:
+    connect_args["ssl"] = True
+
+Base = declarative_base()
+
+engine = None
+async_session_maker = None
 
 def is_db_configured() -> bool:
-    return bool(DATABASE_URL and DATABASE_URL.startswith("postgresql"))
+    return bool(ASYNC_DATABASE_URL and ASYNC_DATABASE_URL.startswith("postgresql+asyncpg"))
 
 def init_db_pool():
-    """Initializes the thread-safe connection pool for PostgreSQL."""
-    global _connection_pool
+    """Initializes the SQLAlchemy async engine."""
+    global engine, async_session_maker
     if not is_db_configured():
-        logger.warning("DATABASE_URL not configured or invalid. Skipping DB connection pool initialization.")
+        logger.warning("DATABASE_URL not configured. Skipping DB connection pool initialization.")
         return False
     
     try:
-        logger.info("Initializing database connection pool (minconn=1, maxconn=10)...")
-        _connection_pool = ThreadedConnectionPool(1, 10, dsn=DATABASE_URL)
-        logger.info("Database connection pool initialized successfully.")
+        logger.info("Initializing async database engine...")
+        engine = create_async_engine(
+            ASYNC_DATABASE_URL,
+            pool_size=10,
+            max_overflow=20,
+            pool_pre_ping=True,
+            echo=False,
+            connect_args=connect_args,
+        )
+        async_session_maker = async_sessionmaker(
+            engine, class_=AsyncSession, expire_on_commit=False
+        )
+        logger.info("Database engine initialized successfully.")
         return True
     except Exception as e:
-        logger.error(f"Failed to initialize database connection pool: {e}")
-        _connection_pool = None
+        logger.error(f"Failed to initialize database engine: {e}")
         return False
 
-def close_db_pool():
-    """Closes all connections in the database pool on application shutdown."""
-    global _connection_pool
-    if _connection_pool:
+async def close_db_pool():
+    """Disposes the SQLAlchemy engine."""
+    global engine
+    if engine:
         try:
-            logger.info("Closing database connection pool...")
-            _connection_pool.closeall()
-            logger.info("Database connection pool closed successfully.")
+            logger.info("Closing async database engine...")
+            await engine.dispose()
+            logger.info("Database engine closed.")
         except Exception as e:
-            logger.error(f"Error closing database connection pool: {e}")
-        finally:
-            _connection_pool = None
+            logger.error(f"Error closing database engine: {e}")
 
-@contextmanager
-def get_db_connection():
-    """Gets a connection from the pool, yielding it and returning it to the pool when done."""
-    global _connection_pool
-    if not is_db_configured():
-        raise ValueError("DATABASE_URL environment variable is not set or invalid")
-    
-    if _connection_pool is None:
-        logger.warning("Database connection pool is not initialized. Falling back to direct connection.")
-        conn = psycopg2.connect(DATABASE_URL)
-        try:
-            yield conn
-        finally:
-            conn.close()
-    else:
-        conn = _connection_pool.getconn()
-        try:
-            yield conn
-        finally:
-            _connection_pool.putconn(conn)
-
-def execute_query(query: str, params: tuple = None):
-    """Utility function to execute queries safely with automatic connection management."""
-    with get_db_connection() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query, params)
-            results = None
-            if cur.description:
-                results = cur.fetchall()
-            conn.commit()
-            return results
-
-def init_db():
-    """Verifies that the contacts table exists or creates it on startup."""
-    if not is_db_configured():
-        logger.warning("DATABASE_URL not configured. Skipping DB initialization.")
+async def init_db():
+    """Creates tables if they don't exist."""
+    if not is_db_configured() or not engine:
         return False
-    
     try:
         logger.info("Ensuring database tables are initialized...")
-        create_table_query = """
-        CREATE TABLE IF NOT EXISTS contacts (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(255) NOT NULL,
-            message TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """
-        execute_query(create_table_query)
-        logger.info("Database initialization completed successfully.")
+        async with engine.begin() as conn:
+            # Explicitly import models here later if needed to register metadata
+            await conn.run_sync(Base.metadata.create_all)
         return True
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         return False
 
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency for getting async database session."""
+    if async_session_maker is None:
+        raise ValueError("Database is not configured or initialized.")
+    async with async_session_maker() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+async def execute_query_raw(query: str):
+    """Utility for executing raw async queries (legacy/health-check use)."""
+    if not async_session_maker:
+        raise Exception("Database not configured")
+    async with async_session_maker() as session:
+        result = await session.execute(text(query))
+        await session.commit()
+        return result

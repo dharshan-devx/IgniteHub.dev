@@ -3,40 +3,81 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import contact, ideaforge
-from app.database import init_db_pool, close_db_pool, init_db, execute_query, is_db_configured
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler()]
-)
+from app.core.logger import setup_logger
+from app.core.exceptions import add_exception_handlers
+from app.database import init_db_pool, close_db_pool, init_db, execute_query_raw, is_db_configured
+from app.routers import contact, ideaforge
+
+# Configure structured JSON logging before anything else runs
+setup_logger()
 logger = logging.getLogger(__name__)
+
+# ─── OpenAPI metadata ─────────────────────────────────────────────────────────
+
+TAGS_METADATA = [
+    {
+        "name": "Contact",
+        "description": "Submit and manage contact form messages stored in PostgreSQL.",
+    },
+    {
+        "name": "IdeaForge",
+        "description": (
+            "AI-powered project idea generator using the Google Gemini API. "
+            "Accepts theme, tech stack, team size, and build time to generate "
+            "structured, actionable project ideas."
+        ),
+    },
+    {
+        "name": "Health",
+        "description": "Liveness and readiness probes for deployment platforms.",
+    },
+    {
+        "name": "Root",
+        "description": "API root and version info.",
+    },
+]
+
+# ─── Lifespan ─────────────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting IgniteHub API...")
-    # Initialize the database connection pool
     init_db_pool()
-    # Initialize database tables
-    init_db()
+    # Import models here so SQLAlchemy registers them with Base.metadata
+    # before create_all is called.
+    from app.models import contact as _contact_model  # noqa: F401
+    await init_db()
     yield
-    # Cleanup resources on shutdown
-    close_db_pool()
+    await close_db_pool()
+    logger.info("IgniteHub API shutdown complete.")
+
+
+# ─── Application factory ──────────────────────────────────────────────────────
 
 app = FastAPI(
     title="IgniteHub API",
-    description="Backend services for IgniteHub (Gemini API proxy, Neon DB gateway)",
-    version="1.0.0",
-    lifespan=lifespan
+    description=(
+        "Production-grade backend for IgniteHub — an AI-powered resource hub "
+        "for young innovators. Built with FastAPI, SQLAlchemy (async), "
+        "PostgreSQL (Neon), and Google Gemini."
+    ),
+    version="2.0.0",
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+    openapi_tags=TAGS_METADATA,
 )
 
-# Configure CORS dynamically from environment variables
-allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
-if allowed_origins_raw:
-    origins = [origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()]
-    logger.info(f"Configuring CORS with custom origins: {origins}")
+add_exception_handlers(app)
+
+# ─── CORS ─────────────────────────────────────────────────────────────────────
+
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+if _raw_origins:
+    origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+    logger.info("CORS: %d custom origin(s) configured", len(origins))
 else:
     origins = [
         "http://localhost:3000",
@@ -47,7 +88,7 @@ else:
         "https://ignitehub-teal.vercel.app",
         "https://ignitehub.dev",
     ]
-    logger.info("Configuring CORS with default local/beta development origins.")
+    logger.info("CORS: using default development origins")
 
 app.add_middleware(
     CORSMiddleware,
@@ -57,43 +98,46 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routers
+# ─── Routers ──────────────────────────────────────────────────────────────────
+
 app.include_router(contact.router)
 app.include_router(ideaforge.router)
 
-@app.get("/")
-def read_root():
+# ─── Root & Health ────────────────────────────────────────────────────────────
+
+@app.get("/", tags=["Root"], summary="API info")
+def read_root() -> dict:
     return {
         "status": "online",
         "service": "IgniteHub API",
-        "docs": "/docs"
+        "version": "2.0.0",
+        "docs": "/api/docs",
     }
 
-@app.get("/api/health")
-@app.get("/health")
-def health_check():
-    """Performs a comprehensive health check on internal state and database integration."""
-    health_status = {
+
+@app.get("/api/health", tags=["Health"], summary="Health check")
+@app.get("/health", tags=["Health"], include_in_schema=False)
+async def health_check() -> dict:
+    """Readiness probe — checks database connectivity and Gemini API key presence."""
+    health: dict = {
         "status": "healthy",
         "service": "IgniteHub API",
+        "version": "2.0.0",
         "database": "not_configured",
-        "gemini_api": "not_configured"
+        "gemini_api": "not_configured",
     }
-    
-    # 1. Check Database Connectivity
+
     if is_db_configured():
         try:
-            execute_query("SELECT 1")
-            health_status["database"] = "connected"
-        except Exception as e:
-            logger.error(f"Database health check query failed: {e}")
-            health_status["database"] = "unreachable"
-            health_status["status"] = "degraded"
-    
-    # 2. Check Gemini API Configuration (without leaking key)
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    if gemini_key:
-        health_status["gemini_api"] = f"configured (ends with ...{gemini_key[-4:] if len(gemini_key) > 4 else ''})"
-        
-    return health_status
+            await execute_query_raw("SELECT 1")
+            health["database"] = "connected"
+        except Exception as exc:
+            logger.error("DB health check failed: %s", exc)
+            health["database"] = "unreachable"
+            health["status"] = "degraded"
 
+    gemini_key = os.getenv("GEMINI_API_KEY", "")
+    if gemini_key:
+        health["gemini_api"] = f"configured (...{gemini_key[-4:]})"
+
+    return health
